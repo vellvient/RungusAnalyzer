@@ -1,0 +1,70 @@
+Total entries scraped: 100
+
+  With English definition:   98 / 100
+  With Malay definition:     99 / 100
+  With example sentences:    68 / 100
+  With sub-entries:          38 / 100
+  Multiple senses:            3 / 100
+  English = ',' (artifact):   0 / 100
+
+  Total senses:      103
+  Total examples:    73
+  Total sub-entries: 125
+
+======================================================================
+Sample entries:
+======================================================================
+
+  aanggakan
+    Sense 1: EN: None  |  MS: bangga diri
+
+  aba-aba
+    Sense 1: EN: shoulder bag  |  MS: beg sandang, kantong
+      Ex: Nunu ot izon dinot aba-aba nu, aki?...
+
+  abai
+    Sense 1: EN: , loft, attic  |  MS: loteng, para-paralotengpara-para
+      Ex: Popungo sid abai ino ikam dino nga omomos....
+
+  abal
+    Sense 1: EN: , same, alike  |  MS: sama, persissamapersis
+      Ex: Aso abal ong yalo dino kaparu....
+
+  abalut
+    Sense 1: EN: confused  |  MS: terkeliru
+      Ex: Talahasan tekou di duatan dikou sid surat, supaya amu kou ab...
+
+  abandak
+    Sense 1: EN: colourful  |  MS: warna-warni
+
+  abangol
+    Sense 1: EN: too large to hold/carry  |  MS: benda yang sangat besar untuk diangkat atau dipeluk
+
+  abangus
+    Sense 1: EN: torn (of nose of buffalo), ripped  |  MS: koyak
+      Ex: Abangus inot odung do karabau dino ong moginuhod yosido....
+
+  abarabai
+    Sense 1: EN: finished walking around  |  MS: selesai berjalan singgah-menyinggah, selesai menziarah
+
+  abarakas
+    Sense 1: EN: , , healthy, active  |  MS: cergas, cerdas, aktifcergascerdasaktif
+
+  abaralangau
+    Sense 1: EN: listen to unconfirmed gossip  |  MS: mendengar khabar angin yang belum dipastikan kebenarannya
+      Ex: Bai abaralangau ku dot nokoling no dot aso dangol ka i Masan...
+
+  abas
+    Sense 1: EN: enough, bored, fed up  |  MS: jemu, bosan
+
+  abata
+    Sense 1: EN: sane, normal  |  MS: sempurna, normal
+      Ex: Abata koulun ong ilo savo di Marni tu banalko aparu, avantan...
+
+  abazazat
+    Sense 1: EN: slowly, little by little, gradually  |  MS: perlahan-lahan, sedikit-sedikit
+      Ex: Banalko abazazat ko mangakan dino kinulat nu mai Oboi....
+
+  abil
+    Sense 1: EN: spillage of rice grain outside planting hole  |  MS: biji padi yg. jatuh di sekeliling lubang tugal semasa menanam padi
+      Ex: Ogumu abil ong i kuvo monumpos....
