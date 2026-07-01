@@ -117,8 +117,9 @@ def parse_entry(entry_div):
 
         # Example sentences
         s["examples"] = []
-        for ex in sense.select(".examplescontent .examplescontent"):
-            example_text = ex.select_one(".example [lang='drg']")
+        # Primary: examplescontents > examplescontent > example
+        for ex in sense.select(".examplescontents > .examplescontent"):
+            example_text = ex.select_one(".example [lang='drg'], .example-2 [lang='drg']")
             en_trans_tags = ex.select(".translation [lang='en']")
             ms_trans_tags = ex.select(".translation [lang='zlm']")
 
@@ -141,9 +142,35 @@ def parse_entry(entry_div):
                 }
             )
 
-        # Fallback for differently structured examples
+        # Fallback for -2 variant structure
         if not s["examples"]:
-            for ex_span in sense.select(".example [lang='drg']"):
+            for ex in sense.select(".examplescontents-2 > .examplescontent"):
+                example_text = ex.select_one(".example-2 [lang='drg'], .example [lang='drg']")
+                en_trans_tags = ex.select(".translation [lang='en']")
+                ms_trans_tags = ex.select(".translation [lang='zlm']")
+
+                raw_ex_en = (
+                    "".join(t.get_text() for t in en_trans_tags).strip()
+                    if en_trans_tags
+                    else None
+                )
+                raw_ex_ms = (
+                    "".join(t.get_text() for t in ms_trans_tags).strip()
+                    if ms_trans_tags
+                    else None
+                )
+
+                s["examples"].append(
+                    {
+                        "rungus": example_text.get_text(strip=True) if example_text else None,
+                        "english": clean_text(raw_ex_en),
+                        "malay": clean_text(raw_ex_ms),
+                    }
+                )
+
+        # Secondary fallback: broad search for lang='drg' inside any example class
+        if not s["examples"]:
+            for ex_span in sense.select(".example [lang='drg'], .example-2 [lang='drg']"):
                 parent_content = ex_span.find_parent(class_="examplescontent")
                 en_trans_t = []
                 ms_trans_t = []
