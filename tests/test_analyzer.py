@@ -183,7 +183,27 @@ class TestPrefixSubstitution:
         r = analyze("mamasa", dictionary)
         assert r["matched"]
         assert r["root"] == "basa"
-        assert r["prefix"] == "mo"
+        assert r["prefix"] == "ma"
+
+    def test_monginakan_resolves_to_akan(self, dictionary):
+        """monginakan (eating) should resolve to root 'akan' with prefix 'mong' and prefix2 'in'."""
+        r = analyze("monginakan", dictionary)
+        assert r["matched"]
+        assert r["root"] == "akan"
+        assert r["prefix"] == "mong"
+        assert r["prefix2"] == "in"
+
+    def test_kisala_and_nakaharati(self, dictionary):
+        """kisala should parse as prefix 'ki' + root 'sala', nakaharati as prefix 'naka' + root 'harati'."""
+        r1 = analyze("kisala", dictionary)
+        assert r1["matched"]
+        assert r1["root"] == "sala"
+        assert r1["prefix"] == "ki"
+
+        r2 = analyze("nakaharati", dictionary)
+        assert r2["matched"]
+        assert r2["root"] == "harati"
+        assert r2["prefix"] == "naka"
 
     def test_ongulun_contracted_prefix(self, dictionary):
         """ongo- + ulun contracts to ongulun (o+u=u).  (Forschner §1.22)"""

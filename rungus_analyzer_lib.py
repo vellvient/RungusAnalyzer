@@ -113,6 +113,7 @@ PREFIXES = [
 
     # ── §2.226–2.227 Perfect / accidental prefixes ────────────────────
     ("noko",           "perfect",        "accidental perfective",                        "sub"),
+    ("naka",           "perfect",        "accidental perfective (a-stem)",               "sub"),
     ("nakapa",         "perfect",        "perfect transitive",                           "sub"),
     ("nokopo",         "perfect",        "perfect transitive (voiced C stem)",           "none"),
     ("min",            "perfect",        "actor focus past (m-/n- stems)",               "sub"),
@@ -130,12 +131,16 @@ PREFIXES = [
     ("pinong",         "causative-past", "causative past (vowel-initial)",               "sub"),
     ("kino",           "realisation-past", "realisation past",                           "sub"),
     ("pino",           "causative-past", "causative past",                               "sub"),
+    ("in",             "perfective",     "past / perfective (vowel-initial)",            "none"),
+    ("um",             "intransitive",   "intransitive process (vowel-initial)",         "none"),
+    ("inum",           "intransitive-past","past intransitive (vowel-initial)",           "none"),
 
     # ── §2.224 Realisation / potential prefixes ───────────────────────
     ("ko",             "realisation",    "realisation / potentiality",                   "sub"),
     ("ka",             "realisation",    "realisation / potentiality (a-stem)",          "sub"),
     ("kapa",           "realisation",    "completed action (a-stem)",                    "sub"),
     ("kopo",           "realisation",    "completed action (o-stem)",                    "none"),
+    ("ki",             "have",           "have / possess / use",                         "none"),
 
     # ── §4.1 Intended / desirous action (verbal flection table) ──────
     ("ti",             "intended",       "intended / about-to-happen action",            "none"),
@@ -567,6 +572,16 @@ def detect_reduplication(word):
             candidate_repeat = word[:repeat_len]
             rest = word[repeat_len:]
             if rest.startswith(candidate_repeat):
+                # Guard: for 2-character CV syllables, only allow valid prefix syllables
+                if repeat_len == 2:
+                    allowed_cv = {
+                        'ma', 'mo', 'mi', 'pa', 'po', 'pi',
+                        'ka', 'ko', 'ki', 'sa', 'so', 'si',
+                        'ta', 'to', 'ti', 'mu'
+                    }
+                    if candidate_repeat not in allowed_cv:
+                        continue
+                
                 # Guard: for 'ma' and 'mo' prefixes, a double repeat is just the normal
                 # prefixed form with consonant substitution (e.g. ma-manau, mo-moros).
                 # We require at least a triple repeat (e.g. mamamanau, momomoros) to strip.
@@ -703,7 +718,15 @@ def try_strip_prefixes(word, dictionary):
         # For vowel-ending prefixes, also try contracted forms
         if prefix_str and prefix_str[-1] in 'aeiou':
             pbase = prefix_str[:-1]   # prefix stem without final vowel
-            for contracted_v in 'uioae':
+            last_v = prefix_str[-1]
+            if last_v == 'o':
+                allowed_vowels = 'uoe'  # o+u->u, o+o->o, o+i->e
+            elif last_v == 'a':
+                allowed_vowels = 'ae'   # a+a->a, a+i->e
+            else:
+                allowed_vowels = last_v  # i/u/e don't contract to other vowels easily
+                
+            for contracted_v in allowed_vowels:
                 cp = pbase + contracted_v
                 if cp != prefix_str:
                     prefix_candidates.append(
@@ -736,18 +759,20 @@ def try_strip_prefixes(word, dictionary):
         candidates = []
         
         # High-priority: if the prefix vowel contracted, resolve the exact original vowel:
-        # o + i -> e  (po + imot -> pemot) -> resolved = i
-        # o + u -> u  (ongo + ulun -> ongulun) -> resolved = u
-        # a + i -> e  (manga + imot -> mengimot) -> resolved = i
-        if surface_prefix != prefix_str and prefix_str and surface_prefix:
+        # o + i -> e/i (po + imot -> pemot, ongo + inggot -> onginggot) -> resolved = i
+        # o + u -> u   (ongo + ulun -> ongulun) -> resolved = u
+        # a + i -> e/i (manga + imot -> mengimot/manginggot) -> resolved = i
+        contraction_occurred = (surface_prefix != prefix_str and prefix_str and surface_prefix)
+        resolved_v = None
+        
+        if contraction_occurred:
             p_last = prefix_str[-1]
             s_last = surface_prefix[-1]
-            resolved_v = None
-            if p_last == 'o' and s_last == 'e':
+            if p_last == 'o' and s_last in ('e', 'i'):
                 resolved_v = 'i'
             elif p_last == 'o' and s_last == 'u':
                 resolved_v = 'u'
-            elif p_last == 'a' and s_last == 'e':
+            elif p_last == 'a' and s_last in ('e', 'i'):
                 resolved_v = 'i'
             
             if resolved_v:
@@ -758,14 +783,14 @@ def try_strip_prefixes(word, dictionary):
                 if c_word not in candidates:
                     candidates.append(c_word)
 
-        # Then add decontracted variants
-        for dc in decontracted:
-            for rc in reverse_substitute(dc, sub_type, SUBSTITUTION_MAP):
-                if rc not in candidates:
-                    candidates.append(rc)
-        
-        if remainder not in candidates:
-            candidates.append(remainder)
+        # If no contraction occurred, or the contraction was not resolved, try all decontracted variants
+        if not contraction_occurred or not resolved_v:
+            for dc in decontracted:
+                for rc in reverse_substitute(dc, sub_type, SUBSTITUTION_MAP):
+                    if rc not in candidates:
+                        candidates.append(rc)
+            if remainder not in candidates:
+                candidates.append(remainder)
 
         for root_candidate in candidates:
             # ── Direct root lookup ──────────────────────────────────
@@ -1039,13 +1064,14 @@ def analyze(word, dictionary):
         """Resolve root to canonical parent and populate result fields."""
         canonical_hw, canonical_gloss = resolve_to_parent(root_key, dictionary)
         
-        # If it was matched as a proper name or loanword, set flags and gloss
-        if root_key in PROPER_NAMES:
-            result["proper_name"] = True
-            canonical_gloss = "proper name (biblical / geographic)"
-        elif root_key in LOANWORDS:
-            result["loanword"] = True
-            canonical_gloss = "loanword (Malay / Arabic)"
+        # If it was matched as a proper name or loanword, set flags and gloss (only if not a native dictionary word)
+        if root_key not in dictionary:
+            if root_key in PROPER_NAMES:
+                result["proper_name"] = True
+                canonical_gloss = "proper name (biblical / geographic)"
+            elif root_key in LOANWORDS:
+                result["loanword"] = True
+                canonical_gloss = "loanword (Malay / Arabic)"
 
         result["root"] = canonical_hw
         result["root_gloss"] = canonical_gloss
