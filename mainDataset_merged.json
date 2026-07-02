@@ -125590,7 +125590,7 @@
     "senses": [
       {
         "english": "palate, roof of mouth",
-        "malay": "lelangit, langit",
+        "malay": "lelangit, langit-langit",
         "examples": [
           {
             "rungus": "Nolonuk ngahad ku hiza do minonginum oku do tunguw do taduk.",
@@ -126160,6 +126160,60 @@
     "url": "https://www.webonary.org/rungus/g64a57ba6-e948-4d38-94a7-1e00347772ff",
     "headword": "uvou do hakod -do rahat",
     "senses": [],
+    "subentries": []
+  },
+  {
+    "guid": "manual-ongkob",
+    "url": "https://www.webonary.org/rungus",
+    "headword": "ongkob",
+    "senses": [
+      {
+        "english": "family room, living room",
+        "malay": "bilik",
+        "examples": [
+          {
+            "rungus": "Suva kou sid ongkob ong modop kou no.",
+            "english": null,
+            "malay": "Masuk dalam bilik kalau kamu mahu tidur."
+          }
+        ]
+      },
+      {
+        "english": "family",
+        "malay": "keluarga",
+        "examples": [
+          {
+            "rungus": "Dahai dot ongkob otigas tu yokoi-okoi no apat sanganak-anak.",
+            "english": null,
+            "malay": "Keluarga kami kecil, hanya kami berempat sahaja."
+          }
+        ]
+      }
+    ],
+    "subentries": []
+  },
+  {
+    "guid": "manual-mosikim",
+    "url": "https://www.webonary.org/rungus",
+    "headword": "mosikim",
+    "senses": [
+      {
+        "english": "poor, destitute, needy",
+        "malay": "miskin",
+        "examples": [
+          {
+            "rungus": "Yokoi diti ulun do mosikim.",
+            "english": "We are poor people.",
+            "malay": "Kami orang miskin."
+          },
+          {
+            "rungus": "Aso harata ong yoku tu mosikim songulun.",
+            "english": "I have nothing, I am just a poor person.",
+            "malay": null
+          }
+        ]
+      }
+    ],
     "subentries": []
   }
 ]
