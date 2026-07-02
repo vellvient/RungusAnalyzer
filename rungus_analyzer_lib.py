@@ -417,6 +417,25 @@ def load_dictionary(path=None):
                 "source":      "standalone",
             }
 
+    # Pass 4: inject custom_vocab.json if it exists (allows HITL import)
+    custom_path = Path(data_path).parent / "custom_vocab.json"
+    if custom_path.exists():
+        try:
+            with open(custom_path, "r", encoding="utf-8") as f:
+                custom_data = json.load(f)
+            for word, entry_info in custom_data.items():
+                w_lower = word.lower()
+                if w_lower not in lookup:
+                    lookup[w_lower] = {
+                        "headword":    entry_info.get("headword", word),
+                        "gloss":       entry_info.get("gloss", ""),
+                        "pos":         entry_info.get("pos", "noun"),
+                        "is_subentry": False,
+                        "source":      "custom",
+                    }
+        except Exception:
+            pass
+
     return lookup
 
 
