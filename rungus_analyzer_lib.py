@@ -1133,18 +1133,26 @@ def analyze(word, dictionary):
     # ── Step 5: Strip prefixes (with substitution + de-contraction) ───
     prefix_results = try_strip_prefixes(working, dictionary)
     if prefix_results:
+        # Get parent of working word if it is a subentry, to prioritize
+        # matching against its true parent root.
+        parent_word = None
+        if working in dictionary and dictionary[working].get("is_subentry"):
+            parent_word = dictionary[working].get("parent", "").strip().lower()
+
         # Rank results:
-        # 1. Prefer single-prefix (no prefix2) over stacked-prefix matches.
-        # 2. Among equal-stack-depth, prefer longer root words (more specific).
-        #    Shorter roots are more likely to be false positives.
-        # 3. Prefer direct matches (no infix/suffix) over complex parses.
+        # 1. Prefer matching the direct parent of the subentry (e.g. mamasa -> basa, not pasa).
+        # 2. Prefer single-prefix (no prefix2) over stacked-prefix matches.
+        # 3. Prefer longer prefixes (more specific — avoids short-prefix false positives).
+        # 4. Among equal-prefix-length, prefer longer root words (more specific).
+        # 5. Prefer direct matches (no infix/suffix) over complex parses.
         def _rank(r):
+            is_parent   = 0 if parent_word and r.get("root", "").strip().lower() == parent_word else 1
             has_p2      = 1 if r.get("prefix2") else 0
             prefix_len  = -len(r.get("prefix", ""))  # negative = longer prefixes first
             has_infix   = 1 if r.get("infix") else 0
             has_suffix  = 1 if r.get("suffix") else 0
             root_len    = -len(r.get("root", ""))    # negative = longer roots first
-            return (has_p2, prefix_len, has_infix, has_suffix, root_len)
+            return (is_parent, has_p2, prefix_len, has_infix, has_suffix, root_len)
         prefix_results.sort(key=_rank)
 
         best = prefix_results[0]

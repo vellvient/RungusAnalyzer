@@ -178,6 +178,13 @@ class TestPrefixSubstitution:
         assert r["matched"]
         assert r["root"] == "imot"
 
+    def test_mamasa_resolves_to_basa(self, dictionary):
+        """mamasa (reading) should resolve to 'basa' (read), not 'pasa' (rotten)."""
+        r = analyze("mamasa", dictionary)
+        assert r["matched"]
+        assert r["root"] == "basa"
+        assert r["prefix"] == "mo"
+
     def test_ongulun_contracted_prefix(self, dictionary):
         """ongo- + ulun contracts to ongulun (o+u=u).  (Forschner §1.22)"""
         r = analyze("ongulun", dictionary)
