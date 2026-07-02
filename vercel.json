@@ -1,9 +1,9 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/rungus-analyzer-web/api/index" }
+    { "source": "/(.*)", "destination": "/api/index" }
   ],
   "functions": {
-    "rungus-analyzer-web/api/**/*.py": {
+    "api/**/*.py": {
       "maxDuration": 10
     }
   }
