@@ -421,10 +421,22 @@ def load_dictionary(path=None):
                 }
                 if shw not in lookup:
                     lookup[shw] = entry_data
-                if "'" in shw:
-                    shw_clean = shw.replace("'", "")
+                
+                # Normalize subentry homonyms (e.g. kosunduvo1 -> kosunduvo)
+                shw_clean = shw.rstrip("0123456789")
+                if shw_clean != shw:
                     if shw_clean not in lookup:
-                        lookup[shw_clean] = entry_data
+                        lookup[shw_clean] = entry_data.copy()
+                        lookup[shw_clean]["headword"] = shw_clean.capitalize()
+
+                if "'" in shw:
+                    shw_clean_glottal = shw.replace("'", "")
+                    if shw_clean_glottal not in lookup:
+                        lookup[shw_clean_glottal] = entry_data
+                if "'" in shw_clean:
+                    shw_clean_both = shw_clean.replace("'", "")
+                    if shw_clean_both not in lookup:
+                        lookup[shw_clean_both] = lookup.get(shw_clean, entry_data)
 
     # Pass 3: inject STANDALONE_WORDS (they take priority as proper roots)
     for word, (gloss, pos) in STANDALONE_WORDS.items():
@@ -697,13 +709,20 @@ def _lookup_root(root_candidate, dictionary):
     key = root_candidate
     if key in VIRTUAL_ROOTS:
         key = VIRTUAL_ROOTS[key]
-    if key in dictionary:
-        return key, dictionary[key]
-    # Try proper names and loanwords as fallback roots during parsing
-    if key in PROPER_NAMES:
-        return key, {"headword": root_candidate, "gloss": "proper name (biblical / geographic)", "is_subentry": False, "proper_name": True}
-    if key in LOANWORDS:
-        return key, {"headword": root_candidate, "gloss": "loanword (Malay / Arabic)", "is_subentry": False, "loanword": True}
+        
+    keys_to_try = [key]
+    if key.endswith('v') and len(key) > 2:
+        keys_to_try.append(key[:-1])
+        
+    for k in keys_to_try:
+        if k in dictionary:
+            return k, dictionary[k]
+        # Try proper names and loanwords as fallback roots during parsing
+        if k in PROPER_NAMES:
+            return k, {"headword": root_candidate, "gloss": "proper name (biblical / geographic)", "is_subentry": False, "proper_name": True}
+        if k in LOANWORDS:
+            return k, {"headword": root_candidate, "gloss": "loanword (Malay / Arabic)", "is_subentry": False, "loanword": True}
+            
     return None, None
 
 
@@ -1288,10 +1307,10 @@ def analyze(word, dictionary):
                         result["suffix"] = suffix_str
                         result["suffix_meaning"] = f"{suf_meaning2} ({suf_cat2})"
                         _set_match(
-                            core, 0.7,
+                            lk, 0.7,
                             [f"prefix: {prefix_str} = {meaning}",
                              f"suffix: -{suffix_str} = {suf_meaning2}",
-                             f"root candidate: '{core}'"]
+                             f"root candidate: '{lk}'"]
                         )
                         return result
 
