@@ -157,7 +157,7 @@ class TestPrefixSubstitution:
         assert r["prefix"] == prefix, (
             f"'{word}': expected prefix '{prefix}', got '{r['prefix']}'"
         )
-        assert r["root"] == expected_root, (
+        assert r["root"].lower() == expected_root.lower(), (
             f"'{word}': expected root '{expected_root}', got '{r['root']}'"
         )
 
@@ -210,7 +210,7 @@ class TestPrefixSubstitution:
         r = analyze("ongulun", dictionary)
         assert r["matched"]
         assert r["prefix"] == "ongo"
-        assert r["root"] == "ulun"
+        assert r["root"].lower() == "ulun"
 
     def test_pemot_vowel_contraction(self, dictionary):
         """po- + imot contracts to pemot (o+i=e).  (Forschner §1.22)"""

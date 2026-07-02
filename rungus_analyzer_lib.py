@@ -390,8 +390,23 @@ def load_dictionary(path=None):
             "is_subentry": False,
         }
         lookup[hw] = entry_data
+        
+        # Normalize homonyms by stripping trailing digits (e.g. tumpu1, tumpu2 -> tumpu)
+        hw_clean = hw.rstrip("0123456789")
+        if hw_clean != hw:
+            if hw_clean in lookup:
+                if entry_data["gloss"] and lookup[hw_clean]["gloss"]:
+                    lookup[hw_clean]["gloss"] += " | " + entry_data["gloss"]
+                elif entry_data["gloss"]:
+                    lookup[hw_clean]["gloss"] = entry_data["gloss"]
+            else:
+                lookup[hw_clean] = entry_data.copy()
+                lookup[hw_clean]["headword"] = hw_clean.capitalize()
+
         if "'" in hw:
             lookup[hw.replace("'", "")] = entry_data
+        if "'" in hw_clean:
+            lookup[hw_clean.replace("'", "")] = lookup.get(hw_clean, entry_data)
 
     # Pass 2: load subentries (only if not already a headword)
     for entry in data:
