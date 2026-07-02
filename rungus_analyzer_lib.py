@@ -128,6 +128,8 @@ PREFIXES = [
     # ── §2.225 Preterit causative prefixes ───────────────────────────
     ("kinopo",         "causative-past", "causative past (voiced C stem)",               "none"),
     ("pinong",         "causative-past", "causative past (vowel-initial)",               "sub"),
+    ("kino",           "realisation-past", "realisation past",                           "sub"),
+    ("pino",           "causative-past", "causative past",                               "sub"),
 
     # ── §2.224 Realisation / potential prefixes ───────────────────────
     ("ko",             "realisation",    "realisation / potentiality",                   "sub"),
@@ -261,22 +263,28 @@ STANDALONE_WORDS = {
     'ginavo':     ('heart / feeling / mind / inner self',     'noun'),
     'araat':      ('bad / evil / wrong',                      'adjective'),
     'duvo':       ('two',                                     'numeral'),
+    'tolu':       ('three',                                   'numeral'),
     'toun':       ('year',                                    'noun'),
     'kurudong':   ('hat / head covering',                     'noun'),
     'koduvo':     ('pair / both / the two',                   'noun'),
     'sumaap':     ('to ask for forgiveness / to greet',       'verb'),
     'oruhai':     ('praise / worship',                        'noun'),
     'fasal':      ('chapter / section (loanword: Arabic→Malay→Rungus)', 'noun'),
+    'kavi':       ('all / complete / finished',               'adjective'),
+    'momogun':    ('Momogun / Rungus people / indigenous peoples of Kudat', 'noun'),
 
     # ── Derived forms whose roots are missing ────────────────────────
     'kobuatano':  ('creation / what was made',                'noun'),
     'karaatan':   ('badness / evil / sin (abstract noun)',    'noun'),
     'monuduk':    ('to sit down (actor focus)',               'verb'),
     'mamakai':    ('to use / to wear (actor focus)',          'verb'),
+    'makai':      ('to use / to wear (actor focus base)',     'verb'),
     'kiguna':     ('benefit / usefulness',                    'noun'),
     'piniizaan':  ('test / trial / temptation',               'noun'),
     'tudukan':    ('seat / dwelling place',                   'noun'),
     'injil':      ('gospel / good news (loanword: Arabic→Malay→Rungus)', 'noun'),
+    'iseso':      ('one / single',                            'numeral'),
+    'ikou':       ('you (2pl subject form)',                  'pronoun'),
 }
 
 
@@ -290,15 +298,16 @@ PROPER_NAMES = {
     # Old Testament figures
     'musa', 'daud', 'salomo', 'elia', 'yeremia', 'yesaya', 'daniel',
     'nehemia', 'ezra', 'ester', 'rut', 'amos', 'hosea', 'yunus',
-    'habakuk', 'harun', 'ishak', 'yakub', 'yusuf', 'abraham',
+    'habakuk', 'harun', 'ishak', 'yakub', 'yusuf', 'abraham', 'ibrahim',
     # Places
     'israel', 'yerusalim', 'galilea', 'betlehem', 'nazaret', 'yudea',
     'babilon', 'mesir', 'rom', 'korintus', 'efesus', 'galatia',
-    'filipi', 'tesalonika', 'kolosi', 'ibrani',
+    'filipi', 'tesalonika', 'kolosi', 'ibrani', 'yahuda', 'yunani',
+    'babil', 'masir',
     # Titles / groups (used as proper nouns in context)
-    'kristus', 'nabi', 'yahudi', 'zabur', 'injil',
+    'kristus', 'nabi', 'yahudi', 'zabur', 'injil', 'parisi',
     # Book titles / abbreviations
-    'amos', 'rom', 'lukas', 'markus',
+    'amos', 'rom', 'lukas', 'markus', 'luk', 'mat', 'mikha',
 }
 
 
@@ -369,24 +378,33 @@ def load_dictionary(path=None):
             gloss = s.get("english") or s.get("malay") or ""
             if gloss:
                 senses.append(gloss)
-        lookup[hw] = {
+        entry_data = {
             "headword":    entry["headword"],
             "gloss":       "; ".join(senses) if senses else "",
             "subentries":  [s.get("headword", "") for s in entry.get("subentries", [])],
             "is_subentry": False,
         }
+        lookup[hw] = entry_data
+        if "'" in hw:
+            lookup[hw.replace("'", "")] = entry_data
 
     # Pass 2: load subentries (only if not already a headword)
     for entry in data:
         for sub in entry.get("subentries", []):
             shw = sub.get("headword", "").strip().lower()
-            if shw and shw not in lookup:
-                lookup[shw] = {
+            if shw:
+                entry_data = {
                     "headword":    sub["headword"],
                     "gloss":       f"(sub-entry of {entry['headword']})",
                     "parent":      entry["headword"],
                     "is_subentry": True,
                 }
+                if shw not in lookup:
+                    lookup[shw] = entry_data
+                if "'" in shw:
+                    shw_clean = shw.replace("'", "")
+                    if shw_clean not in lookup:
+                        lookup[shw_clean] = entry_data
 
     # Pass 3: inject STANDALONE_WORDS (they take priority as proper roots)
     for word, (gloss, pos) in STANDALONE_WORDS.items():
@@ -530,6 +548,12 @@ def detect_reduplication(word):
             candidate_repeat = word[:repeat_len]
             rest = word[repeat_len:]
             if rest.startswith(candidate_repeat):
+                # Guard: for 'ma' and 'mo' prefixes, a double repeat is just the normal
+                # prefixed form with consonant substitution (e.g. ma-manau, mo-moros).
+                # We require at least a triple repeat (e.g. mamamanau, momomoros) to strip.
+                if candidate_repeat in ('ma', 'mo'):
+                    if not word.startswith(candidate_repeat * 3):
+                        continue
                 # e.g., 'mamamanau': repeat='ma', rest='mamanau' ✓
                 return ('prefix_redup', rest)
             # Also try: base is itself a reduplication of a shorter form
@@ -626,6 +650,11 @@ def _lookup_root(root_candidate, dictionary):
         key = VIRTUAL_ROOTS[key]
     if key in dictionary:
         return key, dictionary[key]
+    # Try proper names and loanwords as fallback roots during parsing
+    if key in PROPER_NAMES:
+        return key, {"headword": root_candidate, "gloss": "proper name (biblical / geographic)", "is_subentry": False, "proper_name": True}
+    if key in LOANWORDS:
+        return key, {"headword": root_candidate, "gloss": "loanword (Malay / Arabic)", "is_subentry": False, "loanword": True}
     return None, None
 
 
@@ -966,12 +995,23 @@ def analyze(word, dictionary):
     def _set_match(root_key, confidence, explanation):
         """Resolve root to canonical parent and populate result fields."""
         canonical_hw, canonical_gloss = resolve_to_parent(root_key, dictionary)
+        
+        # If it was matched as a proper name or loanword, set flags and gloss
+        if root_key in PROPER_NAMES:
+            result["proper_name"] = True
+            canonical_gloss = "proper name (biblical / geographic)"
+        elif root_key in LOANWORDS:
+            result["loanword"] = True
+            canonical_gloss = "loanword (Malay / Arabic)"
+
         result["root"] = canonical_hw
         result["root_gloss"] = canonical_gloss
         result["matched"] = True
         result["confidence"] = confidence
         result["breakdown"].extend(explanation)
-        if canonical_hw != dictionary.get(root_key, {}).get("headword", root_key):
+        
+        entry_hw = dictionary.get(root_key, {}).get("headword", root_key) if root_key in dictionary else root_key
+        if canonical_hw != entry_hw:
             result["breakdown"].append(
                 f"  → resolved sub-entry '{root_key}' to parent '{canonical_hw}'"
             )
@@ -1050,6 +1090,20 @@ def analyze(word, dictionary):
     # ── Step 5: Strip prefixes (with substitution + de-contraction) ───
     prefix_results = try_strip_prefixes(working, dictionary)
     if prefix_results:
+        # Rank results:
+        # 1. Prefer single-prefix (no prefix2) over stacked-prefix matches.
+        # 2. Among equal-stack-depth, prefer longer root words (more specific).
+        #    Shorter roots are more likely to be false positives.
+        # 3. Prefer direct matches (no infix/suffix) over complex parses.
+        def _rank(r):
+            has_p2      = 1 if r.get("prefix2") else 0
+            prefix_len  = -len(r.get("prefix", ""))  # negative = longer prefixes first
+            has_infix   = 1 if r.get("infix") else 0
+            has_suffix  = 1 if r.get("suffix") else 0
+            root_len    = -len(r.get("root", ""))    # negative = longer roots first
+            return (has_p2, prefix_len, has_infix, has_suffix, root_len)
+        prefix_results.sort(key=_rank)
+
         best = prefix_results[0]
         result["prefix"] = best["prefix"]
         result["prefix_meaning"] = f"{best['meaning']} ({best['category']})"
@@ -1071,6 +1125,7 @@ def analyze(word, dictionary):
 
         _set_match(best["root"].strip().lower(), 0.8, parts)
         return result
+
 
     # ── Step 6: Strip suffixes ────────────────────────────────────────
     suf_str, suf_cat, suf_meaning, suf_entry = try_strip_suffixes(working, dictionary)

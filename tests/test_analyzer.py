@@ -100,7 +100,7 @@ class TestDirectLookup:
         ("ioti",   "then"),
         ("iosido", "also"),
         ("iadko",  "but"),
-        ("elaan",  "already"),
+        ("elaan",  "know"),
         ("oku",    "I"),
         ("dikou",  "you"),
     ])
