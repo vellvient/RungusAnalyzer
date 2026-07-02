@@ -1,0 +1,85 @@
+=== RUNGUS DICTIONARY STATISTICS ===
+Generated: Updated dataset
+
+Letter  Entries   Subs  Exmpls   NoEng
+     a      298    399     220       1
+     b      497    279     360      12
+     d      168    126     106       2
+     e       21      2      11       2
+     g      300    286     199       0
+     h      197    249     115       5
+     i      233    349     152       8
+     j       27     20      23       0
+     k      684    340     380      20
+     l      495    425     254      13
+     m       72     14      33       4
+     n      235     38     100      13
+     o      477    283     281      22
+     p      555    386     295      20
+     r      349    328     202      16
+     s      830    808     522      35
+     t      752    761     459      32
+     u      202    256     136       3
+     v      162    178     112       5
+     w        6      1       4       0
+     y       14      6      15       1
+     z       17     28      10       0
+
+=== TOP 50 MOST FREQUENT RUNGUS WORDS ===
+  1. amu                        326
+  2. varo                       201
+  3. ku.                        200
+  4. dikou                      191
+  5. inot                       191
+  6. nu.                        152
+  7. kou                        151
+  8. aso                        147
+  9. dino.                      134
+ 10. banal                      129
+ 11. ogumu                      116
+ 12. dau.                       110
+ 13. no.                        104
+ 14. yalo                        99
+ 15. mang                        96
+ 16. dioti                       94
+ 17. ulun                        94
+ 18. silod                       92
+ 19. kada                        92
+ 20. oi.                         92
+ 21. dau                         91
+ 22. banalko                     87
+ 23. ilot                        84
+ 24. nunu                        73
+ 25. anak                        69
+ 26. sitid                       69
+ 27. valai                       66
+ 28. ku,                         65
+ 29. dahai                       60
+ 30. siti                        59
+ 31. biano.                      58
+ 32. yoti                        54
+ 33. mahi                        53
+ 34. agazo                       52
+ 35. okoi                        51
+ 36. bai                         50
+ 37. isai                        49
+ 38. ogi.                        49
+ 39. kadan                       48
+ 40. vaig                        48
+ 41. avantang                    47
+ 42. dino,                       47
+ 43. suvaiko                     47
+ 44. mad                         46
+ 45. ino.                        46
+ 46. mamanau                     45
+ 47. hiza                        44
+ 48. nu,                         43
+ 49. mangakan                    43
+ 50. siombo                      43
+
+=== SUMMARY ===
+Total entries: 6591
+Sub-entries: 5562
+Total word forms: 12153
+Example sentences: 3989
+Entries missing English: 214 (3.2%)

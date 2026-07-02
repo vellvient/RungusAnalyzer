@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rungus Word Analyzer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1a1a25;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --text-muted: #8888a0;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108,92,231,0.15);
+    --prefix: #00b4d8;
+    --root: #06d6a0;
+    --suffix: #f77f00;
+    --infix: #e63946;
+    --enclitic: #8338ec;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    background: var(--surface);
+  }
+  .header-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-size: 18px; font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-text p {
+    font-size: 12px; color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ── Search ── */
+  .search-section {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .search-section h2 {
+    font-size: 32px; font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #6c5ce7 0%, #06d6a0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .search-section p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 14px 20px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .input-row input::placeholder {
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: white;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px var(--accent-glow);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+  .loading.active { display: block; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: var(--text-muted); font-size: 13px; }
+
+  /* ── Result ── */
+  .result {
+    display: none;
+  }
+  .result.active { display: block; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .result-word {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-success {
+    background: rgba(6, 214, 160, 0.15);
+    color: #06d6a0;
+    border: 1px solid rgba(6, 214, 160, 0.3);
+  }
+  .badge-fail {
+    background: rgba(230, 57, 70, 0.15);
+    color: #e63946;
+    border: 1px solid rgba(230, 57, 70, 0.3);
+  }
+
+  /* ── Morpheme segments ── */
+  .word-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    padding: 24px;
+    background: var(--surface2);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    min-height: 60px;
+    align-items: center;
+  }
+  .segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 18px;
+    position: relative;
+  }
+  .segment-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+  .segment-meaning {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.7;
+    max-width: 140px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .seg-prefix { background: rgba(0, 180, 216, 0.2); color: var(--prefix); }
+  .seg-root { background: rgba(6, 214, 160, 0.2); color: var(--root); }
+  .seg-suffix { background: rgba(247, 127, 0, 0.2); color: var(--suffix); }
+  .seg-infix { background: rgba(230, 57, 70, 0.2); color: var(--infix); }
+  .seg-enclitic { background: rgba(131, 56, 236, 0.2); color: var(--enclitic); }
+  .seg-root .segment-label { color: var(--root); }
+  .seg-prefix .segment-label { color: var(--prefix); }
+  .seg-suffix .segment-label { color: var(--suffix); }
+  .seg-infix .segment-label { color: var(--infix); }
+  .seg-enclitic .segment-label { color: var(--enclitic); }
+
+  /* ── Summary ── */
+  .summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .summary-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .summary-item.full {
+    grid-column: 1 / -1;
+  }
+  .summary-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .summary-value {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .summary-value.gloss {
+    font-style: italic;
+    color: var(--root);
+  }
+
+  /* ── Error state ── */
+  .error-state {
+    text-align: center;
+    padding: 24px;
+  }
+  .error-state p {
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .suggestion-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .suggestion-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* ── Example words ── */
+  .examples {
+    margin-top: 40px;
+  }
+  .examples h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .example-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .example-word {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .example-word:hover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    transform: translateY(-1px);
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 60px;
+  }
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .search-section h2 { font-size: 24px; }
+    .input-row { flex-direction: column; }
+    .result-card { padding: 20px; }
+    .word-breakdown { padding: 16px; }
+    .segment { font-size: 14px; padding: 6px 10px; }
+    .summary { grid-template-columns: 1fr; }
+    .result-word { font-size: 22px; }
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+  .empty-state h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">R</div>
+    <div class="header-text">
+      <h1>Rungus Word Analyzer</h1>
+      <p>Morphological analysis powered by Forschner (1994) grammar rules</p>
+    </div>
+  </div>
+</header>
+
+<!-- ─── Main ─── -->
+<div class="container">
+
+  <!-- Search -->
+  <div class="search-section">
+    <h2>Analyze a Rungus word</h2>
+    <p>Enter any Rungus word — the analyzer finds the root and identifies affixes</p>
+    <div class="input-row">
+      <input type="text" id="wordInput" placeholder="e.g. nokolohing" autocomplete="off" spellcheck="false">
+      <button class="btn btn-primary" id="analyzeBtn" onclick="analyze()">Analyze</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Analyzing word structure…</p>
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="result">
+    <div class="result-card">
+      <div class="result-header">
+        <span class="result-word" id="resultWord"></span>
+        <span class="badge" id="resultBadge"></span>
+      </div>
+      <div class="word-breakdown" id="wordBreakdown">
+        <!-- Segments rendered by JS -->
+      </div>
+      <div class="summary" id="resultSummary">
+        <!-- Summary rendered by JS -->
+      </div>
+      <div class="error-state" id="errorState" style="display:none;">
+        <p id="errorMessage">Word not found in dictionary.</p>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="emptyState">
+    <div class="icon">🔍</div>
+    <h3>Ready to analyze</h3>
+    <p>Type a Rungus word above and click Analyze</p>
+  </div>
+
+  <!-- Examples -->
+  <div class="examples">
+    <h3>Try an example</h3>
+    <div class="example-grid">
+      <span class="example-word" onclick="tryWord('nokolohing')">nokolohing</span>
+      <span class="example-word" onclick="tryWord('pinongimotku')">pinongimotku</span>
+      <span class="example-word" onclick="tryWord('mamanau')">mamanau</span>
+      <span class="example-word" onclick="tryWord('rumikot')">rumikot</span>
+      <span class="example-word" onclick="tryWord('mongoduat')">mongoduat</span>
+      <span class="example-word" onclick="tryWord('kosusaan')">kosusaan</span>
+      <span class="example-word" onclick="tryWord('anganak')">anganak</span>
+      <span class="example-word" onclick="tryWord('mongukab')">mongukab</span>
+      <span class="example-word" onclick="tryWord('sinumambayang')">sinumambayang</span>
+      <span class="example-word" onclick="tryWord('kiroon')">kiroon</span>
+      <span class="example-word" onclick="tryWord('minangagama')">minangagama</span>
+      <span class="example-word" onclick="tryWord('kogunaan')">kogunaan</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Footer ─── -->
+<footer>
+  Based on Forschner's <em>Outline of a Momogun Grammar</em> (1994) and Swarthmore LING073 (2025).
+  <br>Built for the Rungus/Momogun language preservation project.
+</footer>
+
+<!-- ─── JavaScript ─── -->
+<script>
+const API_URL = '/api/analyze';
+
+async function analyze() {
+  const input = document.getElementById('wordInput');
+  const word = input.value.trim().toLowerCase();
+  if (!word) return;
+
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word }),
+    });
+    const data = await res.json();
+    renderResult(word, data);
+  } catch (err) {
+    renderError('Network error. Is the API running?');
+  } finally {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+}
+
+function renderResult(word, data) {
+  const el = document.getElementById('result');
+  el.classList.add('active');
+
+  document.getElementById('resultWord').textContent = data.input || word;
+
+  // Badge
+  const badge = document.getElementById('resultBadge');
+  if (data.matched) {
+    badge.textContent = `✓ ${Math.round(data.confidence * 100)}% confidence`;
+    badge.className = 'badge badge-success';
+  } else {
+    badge.textContent = '✗ Not found in dictionary';
+    badge.className = 'badge badge-fail';
+  }
+
+  // Word breakdown
+  const breakdown = document.getElementById('wordBreakdown');
+  breakdown.innerHTML = '';
+
+  if (data.matched && data.segments) {
+    for (const seg of data.segments) {
+      const div = document.createElement('div');
+      div.className = `segment seg-${seg.type}`;
+      div.innerHTML = `
+        <span class="segment-label">${seg.type}</span>
+        <span>${seg.text.replace(/-/g, '')}</span>
+        <span class="segment-meaning">${seg.meaning || ''}</span>
+      `;
+      breakdown.appendChild(div);
+    }
+  } else if (!data.matched) {
+    breakdown.innerHTML = `<div style="color:var(--text-muted);font-size:14px;">No morphological breakdown available</div>`;
+  }
+
+  // Summary
+  const summary = document.getElementById('resultSummary');
+  summary.innerHTML = '';
+
+  if (data.matched && data.root) {
+    summary.innerHTML = `
+      <div class="summary-item">
+        <div class="summary-label">Root word</div>
+        <div class="summary-value" style="font-family:'JetBrains Mono',monospace;color:var(--root)">${data.root}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Meaning</div>
+        <div class="summary-value gloss">${data.root_gloss || '—'}</div>
+      </div>
+    `;
+
+    // Show full reconstruction
+    if (data.segments && data.segments.length > 1) {
+      const breakdownStr = data.segments.map(s => {
+        const colorMap = { prefix: 'var(--prefix)', root: 'var(--root)', suffix: 'var(--suffix)', infix: 'var(--infix)', enclitic: 'var(--enclitic)' };
+        return `<span style="color:${colorMap[s.type] || 'white'}">${s.text}</span>`;
+      }).join(' + ');
+      summary.innerHTML += `
+        <div class="summary-item full">
+          <div class="summary-label">Morphological breakdown</div>
+          <div class="summary-value">${breakdownStr}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Error state
+  const errState = document.getElementById('errorState');
+  const errMsg = document.getElementById('errorMessage');
+  const suggestions = document.getElementById('suggestions');
+
+  if (!data.matched) {
+    errState.style.display = 'block';
+    errMsg.textContent = `"${word}" was not found in the dictionary and could not be decomposed.`;
+    suggestions.innerHTML = '';
+    if (data.suggestions && data.suggestions.length) {
+      errMsg.textContent += ` Did you mean one of these?`;
+      for (const s of data.suggestions) {
+        const chip = document.createElement('span');
+        chip.className = 'suggestion-chip';
+        chip.textContent = s;
+        chip.onclick = () => { document.getElementById('wordInput').value = s; analyze(); };
+        suggestions.appendChild(chip);
+      }
+    }
+  } else {
+    errState.style.display = 'none';
+  }
+}
+
+function renderError(msg) {
+  document.getElementById('result').classList.add('active');
+  document.getElementById('resultWord').textContent = 'Error';
+  document.getElementById('resultBadge').textContent = '✗';
+  document.getElementById('resultBadge').className = 'badge badge-fail';
+  document.getElementById('wordBreakdown').innerHTML = '';
+  document.getElementById('resultSummary').innerHTML = '';
+  document.getElementById('errorState').style.display = 'block';
+  document.getElementById('errorMessage').textContent = msg;
+}
+
+function tryWord(word) {
+  document.getElementById('wordInput').value = word;
+  analyze();
+}
+
+// Enter key support
+document.getElementById('wordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') analyze();
+});
+</script>
+
+</body>
+</html>

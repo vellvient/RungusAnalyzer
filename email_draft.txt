@@ -1,0 +1,28 @@
+Subject: Rungus morphological analyzer prototype + dictionary stats
+
+Dear Christine,
+
+Thank you again for your detailed response — I've been following up on your suggestion about the hermit crab parser, and I wanted to share what I've built so far.
+
+I wrote a Python script that takes a Rungus word and attempts to decompose it into its root + affixes by cross-referencing the dictionary entries on Webonary. It handles prefixes (noko-, mong-, etc.), infixes (-in-, -on-, -um-), suffixes, and possessive clitics (-ku, -nu, etc.).
+
+Some results it gets right:
+
+    nokolohing     → lohing  (prefix: noko-)
+    sinumambayang  → sumambayang  (infix: -in-)
+    monginsan      → insan  (prefix: mong-, infix: -on-)
+    minongimot     → mongimot  (infix: -in-)
+
+And some it struggles with — for example, "pinongimot" tries to extract "imot" as the root, but "imot" isn't in the dictionary as a standalone entry. Is "imot" a valid root, or am I approaching this wrong?
+
+I also ran a frequency analysis across the full dictionary and identified entries that are still missing English translations (about 500+), in case your team finds that useful for prioritizing community review.
+
+I'd love your feedback on:
+1. The affix list I compiled — does it match what your team uses?
+2. Whether a Finite-State approach would integrate with your Flex workflow
+3. Any corrections to the analyzer logic — I'm learning the linguistics as I go
+
+I've attached the analyzer script and the analysis report. Would love to hear your thoughts when you have time.
+
+Best,
+Aifven
