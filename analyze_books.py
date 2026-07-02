@@ -86,6 +86,7 @@ def main():
     print("\n[*] Scanning book files...")
     all_words  = []
     word_books = {}   # word → set of book numbers
+    word_contexts = {} # word → list of context snippets
 
     for i in range(1, 10):
         path = BOOKS_DIR / f"book_{i}.json"
@@ -94,12 +95,21 @@ def main():
 
         book_words = []
         for line in lines:
-            for raw in line.split():
+            words_in_line = line.split()
+            for idx, raw in enumerate(words_in_line):
                 c = clean_word(raw)
                 if c and is_likely_rungus(c):
                     book_words.append(c)
                     all_words.append(c)
                     word_books.setdefault(c, set()).add(i)
+                    
+                    if export_review:
+                        start_idx = max(0, idx - 4)
+                        end_idx = min(len(words_in_line), idx + 5)
+                        snippet = " ".join(words_in_line[start_idx:end_idx])
+                        snippets = word_contexts.setdefault(c, [])
+                        if len(snippets) < 3 and snippet not in snippets:
+                            snippets.append(snippet)
 
         print(f"    book_{i}: {len(lines):>5} lines  |  "
               f"{len(book_words):>7,} tokens")
@@ -241,7 +251,7 @@ def main():
                 "word", "frequency", "books_found_in", "confidence",
                 "prefix_detected", "infix_detected", "suffix_detected",
                 "enclitic_detected", "proper_name", "loanword",
-                "your_proposed_root", "english_gloss", "notes"
+                "context_samples", "your_proposed_root", "english_gloss", "notes"
             ])
             writer.writeheader()
 
@@ -249,6 +259,7 @@ def main():
             for word, freq in unknown_counter.most_common(500):
                 r = analyze(word, dictionary)
                 books = sorted(word_books.get(word, set()))
+                context_str = " | ".join(word_contexts.get(word, []))
                 writer.writerow({
                     "word":            word,
                     "frequency":       freq,
@@ -260,6 +271,7 @@ def main():
                     "enclitic_detected": r["enclitic"] or "",  # FIXED: was 'clitic'
                     "proper_name":     "Y" if r["proper_name"] else "",
                     "loanword":        "Y" if r["loanword"] else "",
+                    "context_samples":  context_str,
                     "your_proposed_root": "",
                     "english_gloss":   "",
                     "notes":           "",
