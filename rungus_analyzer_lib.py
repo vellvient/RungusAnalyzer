@@ -1134,14 +1134,43 @@ def analyze(word, dictionary):
         result["breakdown"].append(f"enclitic: -{enc_str} = {enc_meaning}")
 
 
+    # ── Step 1.5: Direct dictionary lookup ───────────────────────────
+    # If the word is already a known base headword, return it directly.
+    # This prevents false reduplication stripping on words like 'kakal' or 'kakau'.
+    if working in dictionary and not dictionary[working].get("is_subentry", False) and "-" not in working:
+        _set_match(working, 1.0, [f"root: '{working}' = \"{dictionary[working]['gloss']}\""])
+        return result
+
     # ── Step 2: Reduplication detection ──────────────────────────────
     redup_type, redup_base = detect_reduplication(working)
     if redup_type:
-        result["reduplication"] = redup_type
-        result["breakdown"].append(
-            f"reduplication ({redup_type}): '{working}' → base form '{redup_base}'"
-        )
-        working = redup_base  # analyze the base form
+        # Recursively analyze the base form to ensure it yields a valid match.
+        # This prevents false-positive reduplication stripping from blocking the correct parse.
+        sub_r = analyze(redup_base, dictionary)
+        if sub_r["matched"]:
+            result["reduplication"] = redup_type
+            result["root"] = sub_r["root"]
+            result["root_gloss"] = sub_r["root_gloss"]
+            result["matched"] = True
+            result["confidence"] = sub_r["confidence"] * 0.95
+            result["prefix"] = sub_r["prefix"]
+            result["prefix_meaning"] = sub_r["prefix_meaning"]
+            result["prefix2"] = sub_r["prefix2"]
+            result["prefix2_meaning"] = sub_r["prefix2_meaning"]
+            result["infix"] = sub_r["infix"]
+            result["infix_meaning"] = sub_r["infix_meaning"]
+            result["suffix"] = sub_r["suffix"]
+            result["suffix_meaning"] = sub_r["suffix_meaning"]
+            result["enclitic"] = sub_r["enclitic"]
+            result["enclitic_meaning"] = sub_r["enclitic_meaning"]
+            result["proper_name"] = sub_r["proper_name"]
+            result["loanword"] = sub_r["loanword"]
+            
+            result["breakdown"].append(
+                f"reduplication ({redup_type}): '{working}' → base form '{redup_base}'"
+            )
+            result["breakdown"].extend(sub_r["breakdown"])
+            return result
 
     # ── Step 3: Direct dictionary lookup ─────────────────────────────
     if working in dictionary and not dictionary[working].get("is_subentry", False):
@@ -1197,26 +1226,31 @@ def analyze(word, dictionary):
         prefix_results.sort(key=_rank)
 
         best = prefix_results[0]
-        result["prefix"] = best["prefix"]
-        result["prefix_meaning"] = f"{best['meaning']} ({best['category']})"
-        result["infix"] = best.get("infix")
-        result["infix_meaning"] = best.get("infix_meaning")
-        result["suffix"] = best.get("suffix")
-        result["suffix_meaning"] = best.get("suffix_meaning")
-        result["prefix2"] = best.get("prefix2")
-        result["prefix2_meaning"] = best.get("prefix2_meaning")
+        # If this is a subentry but the best prefix match did not resolve to its true parent,
+        # ignore it so we can try to resolve it via suffix stripping (Step 6) or subentry fallback.
+        if parent_word and best["root"].strip().lower() != parent_word:
+            pass
+        else:
+            result["prefix"] = best["prefix"]
+            result["prefix_meaning"] = f"{best['meaning']} ({best['category']})"
+            result["infix"] = best.get("infix")
+            result["infix_meaning"] = best.get("infix_meaning")
+            result["suffix"] = best.get("suffix")
+            result["suffix_meaning"] = best.get("suffix_meaning")
+            result["prefix2"] = best.get("prefix2")
+            result["prefix2_meaning"] = best.get("prefix2_meaning")
 
-        parts = [f"prefix: {best['prefix']} = {best['meaning']}"]
-        if best.get("prefix2"):
-            parts.append(f"prefix2: {best['prefix2']} = {best['prefix2_meaning']}")
-        if best.get("infix"):
-            parts.append(f"infix: -{best['infix']}-  = {best['infix_meaning']}")
-        if best.get("suffix"):
-            parts.append(f"suffix: -{best['suffix']} = {best['suffix_meaning']}")
-        parts.append(f"root candidate: '{best['root']}'")
+            parts = [f"prefix: {best['prefix']} = {best['meaning']}"]
+            if best.get("prefix2"):
+                parts.append(f"prefix2: {best['prefix2']} = {best['prefix2_meaning']}")
+            if best.get("infix"):
+                parts.append(f"infix: -{best['infix']}-  = {best['infix_meaning']}")
+            if best.get("suffix"):
+                parts.append(f"suffix: -{best['suffix']} = {best['suffix_meaning']}")
+            parts.append(f"root candidate: '{best['root']}'")
 
-        _set_match(best["root"].strip().lower(), 0.8, parts)
-        return result
+            _set_match(best["root"].strip().lower(), 0.8, parts)
+            return result
 
 
     # ── Step 6: Strip suffixes ────────────────────────────────────────
