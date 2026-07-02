@@ -15,7 +15,7 @@ Author: Aifven Nelson
 import json
 import sys
 from pathlib import Path
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -132,6 +132,11 @@ def _analyze_one(word: str) -> dict:
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
+
+@app.route("/")
+def index():
+    """Serve the index.html front-end statically."""
+    return send_from_directory(str(_WEB_DIR), "index.html")
 
 @app.route("/api/analyze", methods=["POST", "OPTIONS"])
 def api_analyze():

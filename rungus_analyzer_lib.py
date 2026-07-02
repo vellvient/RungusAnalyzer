@@ -733,15 +733,39 @@ def try_strip_prefixes(word, dictionary):
         #   prefix's terminal vowel with stem's initial vowel.  Restore it by
         #   prepending the contracted vowel to remainder.
         decontracted = decontract_vowel(prefix_str, remainder)
-        candidates = set()
+        candidates = []
+        
+        # High-priority: if the prefix vowel contracted, resolve the exact original vowel:
+        # o + i -> e  (po + imot -> pemot) -> resolved = i
+        # o + u -> u  (ongo + ulun -> ongulun) -> resolved = u
+        # a + i -> e  (manga + imot -> mengimot) -> resolved = i
+        if surface_prefix != prefix_str and prefix_str and surface_prefix:
+            p_last = prefix_str[-1]
+            s_last = surface_prefix[-1]
+            resolved_v = None
+            if p_last == 'o' and s_last == 'e':
+                resolved_v = 'i'
+            elif p_last == 'o' and s_last == 'u':
+                resolved_v = 'u'
+            elif p_last == 'a' and s_last == 'e':
+                resolved_v = 'i'
+            
+            if resolved_v:
+                c_word = resolved_v + remainder
+                for rc in reverse_substitute(c_word, sub_type, SUBSTITUTION_MAP):
+                    if rc not in candidates:
+                        candidates.append(rc)
+                if c_word not in candidates:
+                    candidates.append(c_word)
+
+        # Then add decontracted variants
         for dc in decontracted:
             for rc in reverse_substitute(dc, sub_type, SUBSTITUTION_MAP):
-                candidates.add(rc)
-        candidates.add(remainder)
-        # For contracted prefix: the contracted vowel carries the stem vowel info
-        if surface_prefix != prefix_str:
-            contracted_v = surface_prefix[-1]
-            candidates.add(contracted_v + remainder)
+                if rc not in candidates:
+                    candidates.append(rc)
+        
+        if remainder not in candidates:
+            candidates.append(remainder)
 
         for root_candidate in candidates:
             # ── Direct root lookup ──────────────────────────────────
