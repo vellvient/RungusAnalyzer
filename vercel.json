@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/rungus-analyzer-web/api/index" }
+  ],
+  "functions": {
+    "rungus-analyzer-web/api/**/*.py": {
+      "maxDuration": 10
+    }
+  }
+}
