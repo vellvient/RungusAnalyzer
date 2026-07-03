@@ -107,6 +107,7 @@ PREFIXES = [
     # Past actor-focus
     ("minong",         "transitive",     "actor focus PAST (vowel-initial)",             "sub"),
     ("mino",           "transitive",     "actor focus PAST (voiced C stem)",             "none"),
+    ("mino",           "transitive",     "actor focus PAST (voiceless C / b stem)",      "sub"),
 
     # Perfect actor-focus
     ("nokopong",       "transitive",     "actor focus PERFECT (vowel-initial)",          "sub"),
@@ -118,6 +119,7 @@ PREFIXES = [
     ("nokopo",         "perfect",        "perfect transitive (voiced C stem)",           "none"),
     ("min",            "perfect",        "actor focus past (m-/n- stems)",               "sub"),
     ("no",             "perfect",        "patient focus perfect",                        "none"),
+    ("na",             "perfect",        "patient focus perfect (a-stem)",               "none"),
 
     # ── §2.223 Causative prefixes ─────────────────────────────────────
     ("po",             "causative",      "causative action",                             "sub"),
@@ -136,14 +138,17 @@ PREFIXES = [
     ("inum",           "intransitive-past","past intransitive (vowel-initial)",           "none"),
 
     # ── §2.224 Realisation / potential prefixes ───────────────────────
+    ("kopio",          "intensive",      "extremely / truly",                            "none"),
     ("ko",             "realisation",    "realisation / potentiality",                   "sub"),
     ("ka",             "realisation",    "realisation / potentiality (a-stem)",          "sub"),
     ("kapa",           "realisation",    "completed action (a-stem)",                    "sub"),
-    ("kopo",           "realisation",    "completed action (o-stem)",                    "none"),
+    ("kopo",           "realisation",    "completed action (o-stem)",                    "sub"),
     ("ki",             "have",           "have / possess / use",                         "none"),
 
     # ── §4.1 Intended / desirous action (verbal flection table) ──────
     ("ti",             "intended",       "intended / about-to-happen action",            "none"),
+    ("o",              "stative",        "stative / adjective prefix",                   "none"),
+    ("a",              "stative",        "stative / adjective prefix (a-variant)",       "none"),
 
     # ── §2.461 Plural prefixes ────────────────────────────────────────
     ("ongo",           "plural",         "plural marker",                                "none"),
@@ -231,6 +236,10 @@ VIRTUAL_ROOTS = {
     'raatan':   'karaatan',    # raatan → karaatan (evil/sin)
     'ginavon':  'ginavo',      # suffixed form → ginavo (heart)
     'duduk':    'tudukan',     # duduk (sit) → tudukan (seat, place)
+    'gulianan': 'nogulianan',  # gulianan (revive/awake) → nogulianan
+    'guli':     'nokoguli',    # guli (return/repeat) → nokoguli
+    'gulian':   'nogulianan',  # gulian (revive) → nogulianan
+    'rungaz':   'rungoi',      # rungaz (destroy/ruin) → rungoi
 }
 
 # STANDALONE_WORDS: high-frequency Rungus words completely absent from
@@ -290,6 +299,10 @@ STANDALONE_WORDS = {
     'injil':      ('gospel / good news (loanword: Arabic→Malay→Rungus)', 'noun'),
     'iseso':      ('one / single',                            'numeral'),
     'ikou':       ('you (2pl subject form)',                  'pronoun'),
+    'tasantanid': ('various / different types',               'adjective'),
+    'za':         ('our / we (exclusive possessive)',         'pronoun'),
+    'iokoi':      ('we (exclusive)',                          'pronoun'),
+    'podsu':      ('to bathe / wash (body)',                  'verb'),
 }
 
 
@@ -304,15 +317,20 @@ PROPER_NAMES = {
     'musa', 'daud', 'salomo', 'elia', 'yeremia', 'yesaya', 'daniel',
     'nehemia', 'ezra', 'ester', 'rut', 'amos', 'hosea', 'yunus',
     'habakuk', 'harun', 'ishak', 'yakub', 'yusuf', 'abraham', 'ibrahim',
+    'samuel', 'mariam', 'sulaiman', 'adam', 'yosua', 'zakaria', 'yoel',
+    'yehezkiel', 'herodis', 'saul', 'abram', 'simun',
     # Places
     'israel', 'yerusalim', 'galilea', 'betlehem', 'nazaret', 'yudea',
     'babilon', 'mesir', 'rom', 'korintus', 'efesus', 'galatia',
     'filipi', 'tesalonika', 'kolosi', 'ibrani', 'yahuda', 'yunani',
-    'babil', 'masir',
+    'babil', 'masir', 'samaria', 'sabah', 'yahwe', 'sion',
     # Titles / groups (used as proper nouns in context)
-    'kristus', 'nabi', 'yahudi', 'zabur', 'injil', 'parisi',
-    # Book titles / abbreviations
-    'amos', 'rom', 'lukas', 'markus', 'luk', 'mat', 'mikha',
+    'kristus', 'nabi', 'yahudi', 'zabur', 'injil', 'parisi', 'taurat', 'pilatus',
+    # Book titles / abbreviations / organizations
+    'amos', 'rom', 'lukas', 'markus', 'luk', 'mat', 'mikha', 'pcs',
+    'gal', 'kor', 'paska', 'tim', 'imamat',
+    # Proper names in folk tales
+    'sarip', 'bakaka', 'usan',
 }
 
 
@@ -323,11 +341,20 @@ LOANWORDS = {
     # Common Malay function words
     'yang', 'dan', 'atau', 'dari', 'oleh', 'dalam', 'dengan', 'untuk',
     'pada', 'akan', 'sudah', 'juga', 'bagi', 'itu', 'ini', 'ada',
+    'tetapi', 'bahawa', 'kepada', 'dapat', 'adalah', 'tentang', 'hanya',
+    'telah', 'seorang', 'lain', 'sebagai', 'banyak', 'mungkin', 'sesuatu',
+    'kerana', 'sebab', 'bukan',
     # Malay content words appearing in corpus
     'orang', 'tidak', 'kami', 'dua', 'dia', 'kita', 'mereka', 'saya',
     'tuhan', 'allah', 'tugas', 'hidup', 'tangan', 'mata', 'hati',
+    'kaseh', 'kampong', 'bandar', 'belantara', 'kaisar', 'tampat',
+    'rombongan', 'undang', 'hak', 'daerah', 'engat', 'masti', 'teologia',
+    'tajuk', 'hari', 'persembaan', 'murid', 'utara', 'sodia', 'kata',
+    'gereja', 'sendiri', 'hasil', 'bebas', 'jawab', 'usaha', 'kurang',
+    'baik', 'mahu', 'sama', 'lebih', 'lagi', 'lihat', 'selatan', 'alun',
+    'kota', 'abad', 'pandita', 'kain', 'parsambaan', 'perlu', 'pesta',
     # Arabic loanwords (via Malay) appearing in religious texts
-    'nabi', 'injil', 'zabur', 'fasal', 'iman', 'doa',
+    'nabi', 'injil', 'zabur', 'fasal', 'iman', 'doa', 'khotbah',
 }
 
 
@@ -340,7 +367,8 @@ FUNCTION_WORDS = {
     # Short grammatical particles
     'i', 'di', 'do', 'om', 'dit', 'dot', 'sid', 'ku', 'nu', 'no', 'mo',
     'ko', 'po', 'ka', 'a', 'o', 'nga', 'yo', 'tu', 'ot', 'bo',
-    'na', 'da', 'so', 'ro', 'it',
+    'na', 'da', 'so', 'ro', 'it', 'tgm', 'tm', 'ur', 'sitid',
+    'noko', 'ei', 'ma', 'not', 'isot', 'siri', 'pot', 'didino',
     # Demonstratives / locatives (short forms)
     'dino', 'dioti', 'dih', 'iti', 'ino', 'diti', 'nopo', 'kopo',
     'ong', 'song', 'sinod',
@@ -611,7 +639,7 @@ def detect_reduplication(word):
                     allowed_cv = {
                         'ma', 'mo', 'mi', 'pa', 'po', 'pi',
                         'ka', 'ko', 'ki', 'sa', 'so', 'si',
-                        'ta', 'to', 'ti', 'mu'
+                        'ta', 'to', 'ti', 'mu', 'di'
                     }
                     if candidate_repeat not in allowed_cv:
                         continue
@@ -703,10 +731,14 @@ def strip_infix(word):
         m = pattern.match(word)
         if m:
             init_c = m.group(1)
-            # Prevent 'ong'/'ang' infix collision with 'mong'/'mang' prefixes
+            # Prevent 'ong'/'ang' infix collision with 'mong'/'mang'/'song'/'sang' prefixes
             if init_c.lower() == "m" and bare.lower() == "ong" and word.lower().startswith("mong"):
                 continue
             if init_c.lower() == "m" and bare.lower() == "ang" and word.lower().startswith("mang"):
+                continue
+            if init_c.lower() == "s" and bare.lower() == "ong" and word.lower().startswith("song"):
+                continue
+            if init_c.lower() == "s" and bare.lower() == "ang" and word.lower().startswith("sang"):
                 continue
             rest = m.group(2)
             root = init_c + rest
@@ -734,6 +766,49 @@ def _lookup_root(root_candidate, dictionary):
             return k, {"headword": root_candidate, "gloss": "proper name (biblical / geographic)", "is_subentry": False, "proper_name": True}
         if k in LOANWORDS:
             return k, {"headword": root_candidate, "gloss": "loanword (Malay / Arabic)", "is_subentry": False, "loanword": True}
+        if k in FUNCTION_WORDS:
+            return k, {"headword": root_candidate, "gloss": "grammatical function word / particle", "is_subentry": False}
+
+    # Reversal of vowel harmony (a <-> o)
+    # Case 1: Reversing 'o' to 'a' (e.g., gozo -> gazo, tonid -> tanid)
+    if 'o' in key:
+        alt = key.replace('o', 'a', 1)
+        if alt in dictionary:
+            return alt, dictionary[alt]
+        if key.endswith('o'):
+            alt2 = key[:-1].replace('o', 'a') + 'o'
+            if alt2 in dictionary:
+                return alt2, dictionary[alt2]
+
+    # Case 2: Reversing 'a' to 'o' (e.g., tapat -> topot)
+    if 'a' in key:
+        alt = key.replace('a', 'o')
+        if alt in dictionary:
+            return alt, dictionary[alt]
+        alt2 = key.replace('a', 'o', 1)
+        if alt2 in dictionary:
+            return alt2, dictionary[alt2]
+
+    # Case 3: Reversing 'u' to 'o' (e.g., ondus -> ondos, oondus -> oondos)
+    if 'u' in key:
+        alt = key.replace('u', 'o')
+        if alt in dictionary:
+            return alt, dictionary[alt]
+        alt2 = key.replace('u', 'o', 1)
+        if alt2 in dictionary:
+            return alt2, dictionary[alt2]
+
+    # Case 4: Reversing trailing 'z' to 'i' (e.g., imbulaz -> imbulai)
+    if key.endswith('z'):
+        alt = key[:-1] + 'i'
+        if alt in dictionary:
+            return alt, dictionary[alt]
+
+    # Case 5: Strip acoustic trailing 'h' (e.g., umbasih -> umbasi)
+    if key.endswith('h') and len(key) > 3:
+        alt = key[:-1]
+        if alt in dictionary:
+            return alt, dictionary[alt]
             
     return None, None
 
@@ -783,12 +858,9 @@ def try_strip_prefixes(word, dictionary):
         if not word.startswith(surface_prefix):
             continue
         # Require a meaningful remainder (at least 2 chars after prefix)
-        if len(word) <= len(surface_prefix) + 1:
-            continue
-
         # Guard: short ambiguous prefixes require a longer remainder
         if prefix_str in ('no', 'mo', 'ma', 'ko', 'ka', 'po', 'pa',
-                          'ta', 'to', 'ti', 'mu', 'mi', 'pi', 'm'):
+                          'ta', 'to', 'ti', 'mu', 'mi', 'pi', 'm', 'o', 'a'):
             if len(word) - len(surface_prefix) < 3:
                 continue
 
@@ -870,22 +942,51 @@ def try_strip_prefixes(word, dictionary):
                     })
                     continue
 
-            # ── Suffix within remainder ─────────────────────────────
+            # ── ko-...-o nominalizing circumfix (Forschner grammar) ─────────
+            # When prefix is ko-/ka-, the suffix -o forms a nominalizing
+            # circumfix producing abstract nouns (not the verbal imperative -o).
+            # If the root ends in a high vowel /u/ or /i/, a /v/ glide is
+            # inserted before -o:  ko- + sundu + -o → kosunduvo  (length/power)
+            #                      ko- + anaru + -o → konoruvo   (length)
+            # Strip the glide (-v) + suffix (-o) together to recover the root.
+            if prefix_str in ('ko', 'ka') and root_candidate.endswith('vo') and len(root_candidate) > 3:
+                glide_core = root_candidate[:-2]   # strip 'vo' → bare vowel-final root
+                lk_g, entry_g = _lookup_root(glide_core, dictionary)
+                if lk_g:
+                    results.append({
+                        "prefix":         prefix_str,
+                        "category":       "nominal",
+                        "meaning":        f"abstract noun nominalizer ({prefix_str}-...-o circumfix)",
+                        "suffix":         "o",
+                        "suffix_meaning": "abstract noun nominalizer (ko-...-o, /v/ glide before vowel-final root)",
+                        "root":           lk_g,
+                        "gloss":          entry_g["gloss"],
+                        "matched":        True,
+                    })
+
+            # ── Suffix within remainder ──────────────────────────────────────
             for suffix_str, suf_cat, suf_meaning in SUFFIXES:
                 if root_candidate.endswith(suffix_str) and len(root_candidate) > len(suffix_str) + 1:
                     core = root_candidate[:-len(suffix_str)]
                     lk3, entry3 = _lookup_root(core, dictionary)
                     if lk3:
+                        # ko-/ka- + -o is the nominalizing circumfix, not imperative
+                        resolved_suf_meaning = suf_meaning
+                        resolved_category    = category
+                        if prefix_str in ('ko', 'ka') and suffix_str == 'o':
+                            resolved_suf_meaning = "abstract noun nominalizer (ko-...-o circumfix)"
+                            resolved_category    = "nominal"
                         results.append({
                             "prefix":         prefix_str,
-                            "category":       category,
+                            "category":       resolved_category,
                             "meaning":        meaning,
                             "suffix":         suffix_str,
-                            "suffix_meaning": suf_meaning,
+                            "suffix_meaning": resolved_suf_meaning,
                             "root":           core,
                             "gloss":          entry3["gloss"],
                             "matched":        True,
                         })
+
 
             # ── Stacked prefix: try a SECOND prefix on the remainder ─
             for prefix2_str, cat2, meaning2, sub_type2 in PREFIXES:
@@ -1165,6 +1266,15 @@ def analyze(word, dictionary):
         result["breakdown"].append(f"enclitic: -{enc_str} = {enc_meaning}")
 
 
+    # ── Step 1.2: Function word check ───────────────────────────────
+    if working in FUNCTION_WORDS:
+        result["matched"] = True
+        result["confidence"] = 1.0
+        result["root"] = working
+        result["root_gloss"] = "grammatical function word / particle"
+        result["breakdown"].append(f"function word: '{working}'")
+        return result
+
     # ── Step 1.5: Direct dictionary lookup ───────────────────────────
     # If the word is already a known base headword, return it directly.
     # This prevents false reduplication stripping on words like 'kakal' or 'kakau'.
@@ -1231,7 +1341,19 @@ def analyze(word, dictionary):
             _set_match(after_infix, 0.85, [f"root: '{after_infix}' = \"{entry['gloss']}\""])
             return result
 
-    # ── Step 5: Strip prefixes (with substitution + de-contraction) ───
+    # ── Step 5: Strip suffixes ────────────────────────────────────────
+    suf_str, suf_cat, suf_meaning, suf_entry = try_strip_suffixes(working, dictionary)
+    if suf_str and suf_entry:
+        result["suffix"] = suf_str
+        result["suffix_meaning"] = f"{suf_meaning} ({suf_cat})"
+        _set_match(
+            suf_entry["headword"].strip().lower(), 0.75,
+            [f"suffix: -{suf_str} = {suf_meaning}",
+             f"root candidate: '{suf_entry['headword']}'"]
+        )
+        return result
+
+    # ── Step 6: Strip prefixes (with substitution + de-contraction) ───
     prefix_results = try_strip_prefixes(working, dictionary)
     if prefix_results:
         # Get parent of working word if it is a subentry, to prioritize
@@ -1282,19 +1404,6 @@ def analyze(word, dictionary):
 
             _set_match(best["root"].strip().lower(), 0.8, parts)
             return result
-
-
-    # ── Step 6: Strip suffixes ────────────────────────────────────────
-    suf_str, suf_cat, suf_meaning, suf_entry = try_strip_suffixes(working, dictionary)
-    if suf_str and suf_entry:
-        result["suffix"] = suf_str
-        result["suffix_meaning"] = f"{suf_meaning} ({suf_cat})"
-        _set_match(
-            suf_entry["headword"].strip().lower(), 0.75,
-            [f"suffix: -{suf_str} = {suf_meaning}",
-             f"root candidate: '{suf_entry['headword']}'"]
-        )
-        return result
 
     # ── Step 7: Prefix + suffix combination ──────────────────────────
     for prefix_str, cat, meaning, sub_type in PREFIXES:
