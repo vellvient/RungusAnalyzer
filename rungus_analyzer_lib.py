@@ -387,8 +387,10 @@ def load_dictionary(path=None):
             "headword":    entry["headword"],
             "gloss":       "; ".join(senses) if senses else "",
             "subentries":  [s.get("headword", "") for s in entry.get("subentries", [])],
-            "is_subentry": False,
+            "is_subentry": entry.get("is_subentry", False),
         }
+        if "parent" in entry:
+            entry_data["parent"] = entry["parent"]
         lookup[hw] = entry_data
         
         # Normalize homonyms by stripping trailing digits (e.g. tumpu1, tumpu2 -> tumpu)
@@ -467,6 +469,11 @@ def load_dictionary(path=None):
                     }
         except Exception:
             pass
+
+    # Pass 5: Manual dictionary corrections/patches for Webonary inconsistencies
+    if "minakan" in lookup:
+        lookup["minakan"]["is_subentry"] = True
+        lookup["minakan"]["parent"] = "akan"
 
     return lookup
 
@@ -696,6 +703,11 @@ def strip_infix(word):
         m = pattern.match(word)
         if m:
             init_c = m.group(1)
+            # Prevent 'ong'/'ang' infix collision with 'mong'/'mang' prefixes
+            if init_c.lower() == "m" and bare.lower() == "ong" and word.lower().startswith("mong"):
+                continue
+            if init_c.lower() == "m" and bare.lower() == "ang" and word.lower().startswith("mang"):
+                continue
             rest = m.group(2)
             root = init_c + rest
             return bare, category, meaning, root

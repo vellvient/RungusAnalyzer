@@ -57,32 +57,13 @@ if _LIB_LOADED:
     _WEB_DICT       = _WEB_DIR / "dictionary.json"
     _VERCEL_DATASET = _API_DIR.parent / "mainDataset_merged.json"
 
-    # Helper: load_dictionary() uses a flat dict format for mainDataset_merged.json
-    # The legacy dictionary.json is a flat headword→gloss dict (different format).
-    # We prefer the full dataset.
-    for _candidate in [_MAIN_DATASET, _VERCEL_DATASET]:
+    # Helper: load_dictionary() uses standard format for both full and web datasets.
+    for _candidate in [_MAIN_DATASET, _VERCEL_DATASET, _WEB_DICT]:
         if _candidate.exists():
             try:
                 _DICT = load_dictionary(path=str(_candidate))
                 _DICT_SIZE = len(_DICT)
                 break
-            except Exception as e:
-                _DICT_ERROR = str(e)
-
-    if _DICT is None:
-        # Fall back to the pre-built web dictionary
-        if _WEB_DICT.exists():
-            # Convert flat dict to rungus_analyzer_lib format
-            try:
-                with open(_WEB_DICT, "r", encoding="utf-8") as f:
-                    raw = json.load(f)
-                if isinstance(raw, dict):
-                    # Flat headword→gloss mapping
-                    _DICT = {k.lower(): {"headword": k, "gloss": v, "is_subentry": False}
-                             for k, v in raw.items()}
-                    _DICT_SIZE = len(_DICT)
-                else:
-                    _DICT_ERROR = "Unexpected dictionary.json format"
             except Exception as e:
                 _DICT_ERROR = str(e)
 

@@ -65,18 +65,6 @@ if _LIB_LOADED:
             except Exception as e:
                 _DICT_ERROR = str(e)
 
-    if _DICT is None and _WEB_DICT.exists():
-        # Fall back to web-bundled dictionary.json
-        try:
-            with open(_WEB_DICT, "r", encoding="utf-8") as f:
-                raw = json.load(f)
-            if isinstance(raw, dict):
-                _DICT = {k.lower(): {"headword": k, "gloss": v, "is_subentry": False}
-                         for k, v in raw.items()}
-                _DICT_SIZE = len(_DICT)
-        except Exception as e:
-            _DICT_ERROR = str(e)
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
