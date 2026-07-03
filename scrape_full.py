@@ -23,7 +23,7 @@ BROWSE_URL = f"{BASE}/browse/browse-vernacular-english/"
 LETTERS = list("abdeghijklmnoprstuvwyz")  # Rungus alphabet (no c, f, q, x)
 OUTPUT_FILE = Path(__file__).parent / "mainDataset.json"
 STATE_FILE = Path(__file__).parent / "scrape_state.json"
-DELAY = 1.0  # seconds between page loads
+DELAY = 0.8  # seconds between page loads
 
 # Brave browser path
 BRAVE_PATH = "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe"
@@ -37,15 +37,23 @@ def get_title_safe(page):
         return "(navigating)"
 
 
-def wait_for_cloudflare(page, max_wait=60):
+def wait_for_cloudflare(page, max_wait=600):
     """Wait for Cloudflare 'Just a moment...' challenge to resolve. Returns True if resolved."""
     for i in range(max_wait // 2):
         page.wait_for_timeout(2000)
         title = get_title_safe(page)
         if "Just a moment" not in title and title != "(navigating)":
+            print(f"        [+] Cloudflare passed after {i*2}s!")
+            # Wait for page to fully stabilize after CF redirects
+            page.wait_for_timeout(3000)
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=15000)
+            except:
+                pass
+            print(f"        [+] Page stabilized. Title: {get_title_safe(page)}")
             return True
-        if i == 0 or i % 5 == 0:
-            print(f"        Waiting for CF ({i*2}s)... {title}")
+        if i == 0 or i % 15 == 0:
+            print(f"        Waiting for CF ({i*2}s)... Solve the captcha in the Brave window")
     return False
 
 
@@ -276,8 +284,8 @@ def scrape_full():
 
                 # Handle Cloudflare on this page
                 if "Just a moment" in get_title_safe(page):
-                    print(f"        [!] Cloudflare detected. Waiting...")
-                    if not wait_for_cloudflare(page, max_wait=60):
+                    print(f"        [!] Cloudflare detected. Waiting... (solve captcha in Brave window)")
+                    if not wait_for_cloudflare(page):
                         print(f"        [!] CF did not resolve. Saving state...")
                         save_state(l_idx, page_nr, collected)
                         browser.close()
