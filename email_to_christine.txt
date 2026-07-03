@@ -1,0 +1,25 @@
+Subject: Re: Rungus Morphological Analyzer — Progress Update & Meeting Request
+
+Dear Christine,
+
+I hope you are doing well.
+
+I graduated last year and am currently staying in Kg. Pinorat. This coming 19th July, I'll be heading to Selangor to study my A-Levels at KYUEM. My personal proficiency in Rungus is still quite limited — and that limitation is exactly what inspired me to try contributing to my native language, and in that process, learn it myself.
+
+Over the past few months, I built a prototype Rungus morphological analyzer based on the "hermit crab parser" idea you raised. Using the 12,530 Webonary entries, Forschner's grammar, and the Swarthmore LING073 transducer rules, it currently achieves 96.4% token coverage on a 534,000-word corpus from nine Rungus books (ebfo.de).
+
+You can try it live here: https://rungus-analyzer.vercel.app/
+
+I have attached two documents with the details:
+
+1. Technical Progress Report (PDF) — Covers the two main error categories (false positives and false negatives), the morphophonological rules I have implemented, and specific linguistic questions where I need your expert confirmation — particularly around the ko-...-o nominalizing circumfix and the /v/ glide insertion pattern.
+
+2. HITL Review Spreadsheet (CSV) — The top 500 unanalyzed words from the corpus, pre-filled with sentence context and AI-generated guesses for your review. The web app also has an "Export Unanalyzed to CSV" button in Batch Mode if you want to generate these for any Rungus text yourself.
+
+I would love to meet you in person before I leave for KYUEM, or when I return during a school break. Since you are not far from Tinangol and I am in Kg. Pinorat, it would be wonderful to catch up, show you the analyzer, and discuss the linguistic questions in the attached report.
+
+Please let me know if you might be free sometime soon.
+
+Best regards,
+
+Aifven Vellvient Nelson
