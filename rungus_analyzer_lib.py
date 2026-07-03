@@ -215,6 +215,7 @@ ENCLITICS = [
     ("-kou",    "pronominal",  "you (2pl)"),
     ("-dau",    "pronominal",  "his/her own (reflexive)"),
     ("-zou",    "pronominal",  "we (exclusive 1pl)"),
+    ("-oku",    "pronominal",  "I / me (1sg subject)"),
     ("-ku",     "pronominal",  "my / I (1sg)"),
     ("-nu",     "pronominal",  "your / you (2sg)"),
     ("-no",     "pronominal",  "his / her (3sg)"),
@@ -1350,9 +1351,13 @@ def analyze(word, dictionary):
     # ── Step 1.5: Direct dictionary lookup ───────────────────────────
     # If the word is already a known base headword, return it directly.
     # This prevents false reduplication stripping on words like 'kakal' or 'kakau'.
-    if working in dictionary and not dictionary[working].get("is_subentry", False) and "-" not in working:
-        _set_match(working, 1.0, [f"root: '{working}' = \"{dictionary[working]['gloss']}\""])
-        return result
+    # BUT: if an enclitic was stripped, skip direct lookup to allow deeper
+    # morphological decomposition (e.g., minonudukoku → minonuduk →
+    # mo- + -in- + tuduk, rather than flat 'minonuduk').
+    if not enc_str:
+        if working in dictionary and not dictionary[working].get("is_subentry", False) and "-" not in working:
+            _set_match(working, 1.0, [f"root: '{working}' = \"{dictionary[working]['gloss']}\""])
+            return result
 
     # ── Step 2: Reduplication detection ──────────────────────────────
     redup_type, redup_base = detect_reduplication(working)
@@ -1386,9 +1391,11 @@ def analyze(word, dictionary):
             return result
 
     # ── Step 3: Direct dictionary lookup ─────────────────────────────
-    if working in dictionary and not dictionary[working].get("is_subentry", False):
-        _set_match(working, 1.0, [f"root: '{working}' = \"{dictionary[working]['gloss']}\""])
-        return result
+    # (skipped if enclitic was stripped — prefer morphological breakdown)
+    if not enc_str:
+        if working in dictionary and not dictionary[working].get("is_subentry", False):
+            _set_match(working, 1.0, [f"root: '{working}' = \\\"{dictionary[working]['gloss']}\\\""])
+            return result
 
     # Vowel-ending alternation variants (common in Rungus)
     _alt_map = [('o', 'a'), ('a', 'o'), ('u', 'o'), ('i', ''), ('e', 'o')]
