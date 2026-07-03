@@ -1,28 +1,46 @@
-Subject: Rungus morphological analyzer prototype + dictionary stats
-
+Subject: Re: Rungus Morphological Workstation Prototype (A Levels & Progress Update!)
 Dear Christine,
 
-Thank you again for your detailed response — I've been following up on your suggestion about the hermit crab parser, and I wanted to share what I've built so far.
+How are you doing? I hope you are doing well.
 
-I wrote a Python script that takes a Rungus word and attempts to decompose it into its root + affixes by cross-referencing the dictionary entries on Webonary. It handles prefixes (noko-, mong-, etc.), infixes (-in-, -on-, -um-), suffixes, and possessive clitics (-ku, -nu, etc.).
+I graduated last year and am currently staying in Kg. Pinorat. This coming 19th July, I'll be heading to Selangor to study my A-Levels at KYUEM. I must admit that my personal proficiency in Rungus is still quite limited — and that limitation is exactly what inspired me to try contributing to my native language, and in that process, learn it myself.
 
-Some results it gets right:
+Over the past few months, I have been thinking seriously about the questions you raised in your previous email. You mentioned that you and your team would be very interested if someone could build a "hermit crab parser" for Rungus — a tool that extracts roots and affixes from surface word forms. From that, I tried building a prototype of a Rungus morphological analyzer.
 
-    nokolohing     → lohing  (prefix: noko-)
-    sinumambayang  → sumambayang  (infix: -in-)
-    monginsan      → insan  (prefix: mong-, infix: -on-)
-    minongimot     → mongimot  (infix: -in-)
+Using the 13,230+ entries from the Webonary dictionary, Traugott Forschner's Grammar of Rungus, and the morphological rules documented in Swarthmore College's LING073 transducer project, the analyzer currently achieves 96.4% token coverage when tested against a corpus of nine Rungus books containing over 534,000 words (obtained from ebfo.de).
 
-And some it struggles with — for example, "pinongimot" tries to extract "imot" as the root, but "imot" isn't in the dictionary as a standalone entry. Is "imot" a valid root, or am I approaching this wrong?
+You can try the live deployed prototype here: 🔗 https://rungus-analyzer.vercel.app/
 
-I also ran a frequency analysis across the full dictionary and identified entries that are still missing English translations (about 500+), in case your team finds that useful for prioritizing community review.
+Because of my limited proficiency, the analyzer is not yet fully accurate. I have identified two main categories of errors, and I would really value your expert guidance on them.
 
-I'd love your feedback on:
-1. The affix list I compiled — does it match what your team uses?
-2. Whether a Finite-State approach would integrate with your Flex workflow
-3. Any corrections to the analyzer logic — I'm learning the linguistics as I go
+1. False Positives — The Analyzer Finds A Root, But The Wrong One
 
-I've attached the analyzer script and the analysis report. Would love to hear your thoughts when you have time.
+The most common failure mode is a spelling collision: the analyzer successfully strips the affixes, but lands on the wrong root because two valid roots have the same surface form after stripping.
 
-Best,
-Aifven
+Example: mamasa — The engine strips the transitive prefix, which nasalizes the stem-initial consonant (a rule documented by Forschner and confirmed by the Swarthmore transducer). The resulting core is masa. Under the nasalization rules, an initial m- can represent an original p-, b-, or v-. Unfortunately, the dictionary contains both basa ("to read") and pasa ("rotten"), both of which are equally short and equally valid candidates. Without a way to know which is more likely, the engine can easily parse a word meaning "reading" as if it comes from the root "rotten." I have since added a priority system that prefers the parent entry's own subentry list, which helps considerably — but it does not solve all cases.
+
+Example: kaka- words — Words like kakal ("still/yet"), kakau ("epilepsy"), and kakat ("pull/drag") were initially misparsed because the engine eagerly interpreted ka- as a CV-reduplication prefix, stripping it to produce false bases like kal, kau, or kat, none of which exist. I have since added a guard that checks the full word in the dictionary first before attempting any reduplication stripping.
+
+Example: kosunduvo and kobuatano — This is a systematic error I want to raise with you specifically, because I believe I now understand what is happening — but I would like you to confirm it.
+
+Both words are abstract nouns, but the analyzer incorrectly labels their trailing -o as the verbal suffix -o ("imperative patient focus"). This is wrong because ko- and -o together form the nominalizing circumfix ko-...-o, which creates abstract nouns from root stems — not verb commands. The issue is that the analyzer does not distinguish between these two homophonous suffixes: the verbal -o (imperative) and the nominal -o (abstract noun nominalizer).
+
+The morphophonological behavior is also consistent with Forschner's grammar. In kobuatano, the root buatan ends in a consonant, so the suffix -o is appended directly with no change. In kosunduvo, the root sundu ends in the high vowel /u/, and Rungus grammar inserts a /v/ glide to bridge the two adjacent vowels before adding -o: ko- + sundu + o → ko-sundu-vo → kosunduvo. I found the same rule applied consistently elsewhere in the dictionary: anaru ("long") → konoruvo ("length"), which follows the exact same pattern (anaru ends in /u/, glide inserted, suffix -o appended).
+
+The fix for the analyzer would be: when the prefix ko- is present and the trailing morpheme is -o (or -vo after a vowel-final root), treat the suffix as the nominalizing -o, not the imperative -o. I am fairly confident this analysis is correct based on the pattern in the data, but I would appreciate your confirmation — particularly on whether the ko-...-o circumfix is fully productive in Rungus, and whether there are other high vowels (like /i/) that trigger the same glide insertion.
+
+2. False Negatives — The Analyzer Fails to Parse or Connect a Word to its Root
+
+Example: kopioondusan — This word appears 209 times across the nine books but initially failed to parse because of a vowel harmony shift. The root is actually ondos ("to guess/think/suspect"), but under the influence of the suffix -an, the second vowel /o/ shifts to /u/, resulting in ondus. When combined with the intensive prefix kopio- ("extremely/truly"), it forms kopioondusan ("extremely suspecting / full of assumptions"). Since the dictionary only contains the base ondos, the analyzer initially failed to recognize the root until I implemented vowel de-harmonization (reversing u to o) to reconstruct the canonical form. I have found dozens of similar cases of complex phonetic shifts. To address this, I have been working on a "Human-in-the-Loop" (HITL) workflow where an LLM examines the surrounding sentence context and pre-fills a spreadsheet with educated guesses about the root and meaning, which a human reviewer can then confirm or correct.
+
+As a small test of this workflow, I exported the top 500 unanalyzed words from the corpus. I have attached the pre-filled spreadsheet (reviewed_testv1.csv) along with the raw list (top500before_review.csv) for you to look over. The AI performs surprisingly well on loanwords (like kampong and bandar) but struggles, understandably, with native Rungus vocabulary — which is exactly where your expertise would be invaluable.
+
+To make the review process easy, I have added an "Export Unanalyzed to CSV" button in the Batch Mode section of the web app. If you paste any Rungus text and process it, you can download a spreadsheet of the failed words with their sentence context already filled in, so you do not have to start from scratch.
+
+I would love the opportunity to meet you in person before I leave for KYUEM, or when I return during a school break. Since you are not far from Tinangol and I am currently in Kg. Pinorat, it would be wonderful to catch up, show you how the analyzer works behind the scenes, and most importantly discuss some of these linguistic questions — particularly the ko-...-vo pattern — that I simply cannot resolve without a native expert.
+
+Please let me know if you might be free sometime soon. I would really enjoy meeting you and hearing your thoughts.
+
+Best regards,
+
+Aifven Vellvient Nelson

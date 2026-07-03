@@ -1,14 +1,14 @@
 # Rungus Morphological Analyzer & Translator (v3.0)
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-131%20passed-success.svg)](./tests/)
-[![Corpus Token Coverage](https://img.shields.io/badge/corpus%20coverage-93.3%25-brightgreen.svg)](#performance-metrics)
+[![Tests](https://img.shields.io/badge/tests-134%20passed-success.svg)](./tests/)
+[![Corpus Token Coverage](https://img.shields.io/badge/corpus%20coverage-96.4%25-brightgreen.svg)](#performance-metrics)
 
 An advanced, high-performance morphological analyzer and lexicon database for **Rungus** (ISO 639-3: `drg`), an endangered Austronesian language spoken by the Momogun people of Kudat, Sabah, Malaysia. 
 
 This analyzer decomposes inflected surface words into their base roots, prefixes, infixes, suffixes, and enclitics, applying complex morphophonological rewrite rules (consonant substitution, vowel harmony, vowel contraction, and stacked prefix resolution).
 
-Developed for language preservation and computational linguistic research, this project outpaces previous academic transducers (such as Swarthmore's LING073 FST) by scaling the lexicon to **12,500+ entries** and achieving **93.3% token coverage** over a 534,000-word corpus of Rungus text.
+Developed for language preservation and computational linguistic research, this project outpaces previous academic transducers (such as Swarthmore's LING073 FST) by scaling the lexicon to **12,500+ entries** and achieving **96.4% token coverage** over a 534,000-word corpus of Rungus text.
 
 ---
 
@@ -28,7 +28,7 @@ This project is structured around a **unified core library** that isolates the l
 graph TD
     subgraph Core Engine
         Lib[rungus_analyzer_lib.py]
-        Dict[mainDataset_merged.json] -->|Loads 12,559 entries| Lib
+        Dict[mainDataset_merged.json] -->|Loads 13,234 entries| Lib
     end
 
     subgraph User Interfaces
@@ -37,7 +37,7 @@ graph TD
     end
 
     subgraph Quality Control
-        Tests[tests/test_analyzer.py] -->|131 Pytest cases| Lib
+        Tests[tests/test_analyzer.py] -->|134 Pytest cases| Lib
         Corpus[analyze_books.py] -->|Analyzes 534K tokens| Lib
     end
     
@@ -48,7 +48,7 @@ graph TD
 - **`rungus_analyzer.py`**: A lightweight CLI interface for running interactive single-word analyses, demo walkthroughs, and generation examples.
 - **`analyze_books.py`**: A corpus analysis engine that evaluates token coverage, mines high-frequency unknown words, and exports them to a human-in-the-loop review queue.
 - **`rungus-analyzer-web/api/index.py`**: A Flask-based REST API designed for serverless deployment on Vercel, providing JSON endpoints for single-word analysis, batch-processing, and generation.
-- **`tests/test_analyzer.py`**: A comprehensive test suite with 131 test cases verifying affix stripping, phonological contractions, edge-case regressions, and negative bounds.
+- **`tests/test_analyzer.py`**: A comprehensive test suite with 134 test cases verifying affix stripping, phonological contractions, edge-case regressions, and negative bounds.
 
 ---
 
@@ -99,27 +99,27 @@ We evaluated version 3.0 of our analyzer against a large-scale corpus consisting
 
 | Category | Unique Words | % of Unique | Tokens | % of Tokens |
 |---|---|---|---|---|
-| **Direct Dictionary Match** | 1,426 | 8.1% | 139,887 | 26.2% |
-| **Decomposed via Affixes** | 7,914 | 45.0% | 131,589 | 24.6% |
-| **Proper Names (Biblical/Geo)** | 94 | 0.5% | 21,618 | 4.0% |
-| **Loanwords (Malay/Arabic)** | 117 | 0.7% | 7,715 | 1.4% |
-| **Grammatical Function Words** | 32 | 0.2% | 198,288 | 37.1% |
-| **Failed (Unanalyzed)** | 8,003 | 45.5% | 35,678 | 6.7% |
+| **Direct Dictionary Match** | 1,545 | 8.8% | 130,849 | 24.5% |
+| **Decomposed via Affixes** | 9,292 | 52.8% | 150,412 | 28.1% |
+| **Proper Names (Biblical/Geo)** | 117 | 0.7% | 23,235 | 4.3% |
+| **Loanwords (Malay/Arabic)** | 188 | 1.1% | 11,933 | 2.2% |
+| **Grammatical Function Words** | 44 | 0.3% | 199,333 | 37.3% |
+| **Failed (Unanalyzed)** | 6,399 | 36.4% | 19,013 | 3.6% |
 | **TOTAL** | **17,586** | **100.0%** | **534,775** | **100.0%** |
 
-$$\text{Total System Token Coverage} = \mathbf{93.3\%} \quad (499,097 \text{ out of } 534,775 \text{ tokens})$$
+$$\text{Total System Token Coverage} = \mathbf{96.4\%} \quad (515,762 \text{ out of } 534,775 \text{ tokens})$$
 
 ### Comparison with Swarthmore Transducer (LING073)
 
 | Metric | Swarthmore Transducer | Antigravity Rungus Analyzer (v3.0) |
 |---|---|---|
-| **Lexicon Size** | 100 stems | **12,559 entries** (125x larger) |
-| **Corpus Coverage** | 35.8% | **93.3%** (2.6x higher) |
+| **Lexicon Size** | 100 stems | **13,234 entries** (132x larger) |
+| **Corpus Coverage** | 35.8% | **96.4%** (2.7x higher) |
 | **Reduplication Support** | No | **Yes** (full and CV-prefix) |
 | **Glottal Stop Normalization** | No | **Yes** (matches spelling variations) |
 | **Proper Name / Loanword Detection** | No | **Yes** (decomposes with affixes) |
 | **Web REST API** | No | **Yes** (Flask/Vercel) |
-| **Test Suite Coverage** | No | **Yes** (131 pytest cases) |
+| **Test Suite Coverage** | No | **Yes** (134 pytest cases) |
 
 ---
 
