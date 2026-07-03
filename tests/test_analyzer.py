@@ -230,6 +230,14 @@ class TestPrefixSubstitution:
         if r["matched"] and r["prefix"] == "ma":
             assert r["root"] != "amas"
 
+    def test_kopiondusan_reciprocal(self, dictionary):
+        """kopiondusan should parse to root 'andus' with reciprocal prefix 'kopi' and suffix '-an'."""
+        r = analyze("kopiondusan", dictionary)
+        assert r["matched"]
+        assert r["prefix"] == "kopi"
+        assert r["root"] == "andus"
+        assert r["suffix"] == "an"
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # 4. INFIX STRIPPING  (Forschner §2.3)

@@ -139,6 +139,7 @@ PREFIXES = [
 
     # ── §2.224 Realisation / potential prefixes ───────────────────────
     ("kopio",          "intensive",      "extremely / truly",                            "none"),
+    ("kopi",           "transitive",     "reciprocal / dual action",                     "none"),
     ("ko",             "realisation",    "realisation / potentiality",                   "sub"),
     ("ka",             "realisation",    "realisation / potentiality (a-stem)",          "sub"),
     ("kapa",           "realisation",    "completed action (a-stem)",                    "sub"),
@@ -760,7 +761,12 @@ def _lookup_root(root_candidate, dictionary):
         
     for k in keys_to_try:
         if k in dictionary:
-            return k, dictionary[k]
+            entry = dictionary[k]
+            if entry.get("is_subentry") and entry.get("parent"):
+                parent = entry["parent"].strip().lower()
+                if parent in dictionary:
+                    return parent, dictionary[parent]
+            return k, entry
         # Try proper names and loanwords as fallback roots during parsing
         if k in PROPER_NAMES:
             return k, {"headword": root_candidate, "gloss": "proper name (biblical / geographic)", "is_subentry": False, "proper_name": True}
@@ -922,7 +928,7 @@ def try_strip_prefixes(word, dictionary):
                     "prefix":   prefix_str,
                     "category": category,
                     "meaning":  meaning,
-                    "root":     root_candidate,
+                    "root":     lk,
                     "gloss":    entry["gloss"],
                     "matched":  True,
                 })
@@ -940,7 +946,7 @@ def try_strip_prefixes(word, dictionary):
                         "meaning":       meaning,
                         "infix":         infix_str,
                         "infix_meaning": infix_meaning,
-                        "root":          after_infix,
+                        "root":          lk2,
                         "gloss":         entry2["gloss"],
                         "matched":       True,
                     })
@@ -969,27 +975,28 @@ def try_strip_prefixes(word, dictionary):
                     })
 
             # ── Suffix within remainder ──────────────────────────────────────
-            for suffix_str, suf_cat, suf_meaning in SUFFIXES:
-                if root_candidate.endswith(suffix_str) and len(root_candidate) > len(suffix_str) + 1:
-                    core = root_candidate[:-len(suffix_str)]
-                    lk3, entry3 = _lookup_root(core, dictionary)
-                    if lk3:
-                        # ko-/ka- + -o is the nominalizing circumfix, not imperative
-                        resolved_suf_meaning = suf_meaning
-                        resolved_category    = category
-                        if prefix_str in ('ko', 'ka') and suffix_str == 'o':
-                            resolved_suf_meaning = "abstract noun nominalizer (ko-...-o circumfix)"
-                            resolved_category    = "nominal"
-                        results.append({
-                            "prefix":         prefix_str,
-                            "category":       resolved_category,
-                            "meaning":        meaning,
-                            "suffix":         suffix_str,
-                            "suffix_meaning": resolved_suf_meaning,
-                            "root":           core,
-                            "gloss":          entry3["gloss"],
-                            "matched":        True,
-                        })
+            if prefix_str != "kopio":
+                for suffix_str, suf_cat, suf_meaning in SUFFIXES:
+                    if root_candidate.endswith(suffix_str) and len(root_candidate) > len(suffix_str) + 1:
+                        core = root_candidate[:-len(suffix_str)]
+                        lk3, entry3 = _lookup_root(core, dictionary)
+                        if lk3:
+                            # ko-/ka- + -o is the nominalizing circumfix, not imperative
+                            resolved_suf_meaning = suf_meaning
+                            resolved_category    = category
+                            if prefix_str in ('ko', 'ka') and suffix_str == 'o':
+                                resolved_suf_meaning = "abstract noun nominalizer (ko-...-o circumfix)"
+                                resolved_category    = "nominal"
+                            results.append({
+                                "prefix":         prefix_str,
+                                "category":       resolved_category,
+                                "meaning":        meaning,
+                                "suffix":         suffix_str,
+                                "suffix_meaning": resolved_suf_meaning,
+                                "root":           lk3,
+                                "gloss":          entry3["gloss"],
+                                "matched":        True,
+                            })
 
 
             # ── Stacked prefix: try a SECOND prefix on the remainder ─
@@ -1014,7 +1021,7 @@ def try_strip_prefixes(word, dictionary):
                             "meaning":         meaning,
                             "prefix2":         prefix2_str,
                             "prefix2_meaning": f"{meaning2} ({cat2})",
-                            "root":            root2,
+                            "root":            lk4,
                             "gloss":           entry4["gloss"],
                             "matched":         True,
                         })
