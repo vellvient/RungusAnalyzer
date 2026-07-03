@@ -224,6 +224,12 @@ class TestPrefixSubstitution:
         assert r["matched"]
         assert r["root"] == "imot"
 
+    def test_mamas_no_ma_contraction(self, dictionary):
+        """mamas should not parse to root 'amas' with 'ma-' prefix (since ma- has sub_type='sub')."""
+        r = analyze("mamas", dictionary)
+        if r["matched"] and r["prefix"] == "ma":
+            assert r["root"] != "amas"
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # 4. INFIX STRIPPING  (Forschner §2.3)

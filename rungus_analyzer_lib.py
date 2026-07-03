@@ -873,7 +873,11 @@ def try_strip_prefixes(word, dictionary):
         #   The contracted vowel in the surface prefix is the result of merging
         #   prefix's terminal vowel with stem's initial vowel.  Restore it by
         #   prepending the contracted vowel to remainder.
-        decontracted = decontract_vowel(prefix_str, remainder)
+        if sub_type in ('sub', 'add'):
+            # Consonant-substituting prefixes only apply to consonant-initial stems
+            decontracted = [remainder]
+        else:
+            decontracted = decontract_vowel(prefix_str, remainder)
         candidates = []
         
         # High-priority: if the prefix vowel contracted, resolve the exact original vowel:

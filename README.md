@@ -1,7 +1,7 @@
 # Rungus Morphological Analyzer & Translator (v3.0)
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-134%20passed-success.svg)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-135%20passed-success.svg)](./tests/)
 [![Corpus Token Coverage](https://img.shields.io/badge/corpus%20coverage-96.4%25-brightgreen.svg)](#performance-metrics)
 
 An advanced, high-performance morphological analyzer and lexicon database for **Rungus** (ISO 639-3: `drg`), an endangered Austronesian language spoken by the Momogun people of Kudat, Sabah, Malaysia. 
@@ -37,7 +37,7 @@ graph TD
     end
 
     subgraph Quality Control
-        Tests[tests/test_analyzer.py] -->|134 Pytest cases| Lib
+        Tests[tests/test_analyzer.py] -->|135 Pytest cases| Lib
         Corpus[analyze_books.py] -->|Analyzes 534K tokens| Lib
     end
     
@@ -48,7 +48,7 @@ graph TD
 - **`rungus_analyzer.py`**: A lightweight CLI interface for running interactive single-word analyses, demo walkthroughs, and generation examples.
 - **`analyze_books.py`**: A corpus analysis engine that evaluates token coverage, mines high-frequency unknown words, and exports them to a human-in-the-loop review queue.
 - **`rungus-analyzer-web/api/index.py`**: A Flask-based REST API designed for serverless deployment on Vercel, providing JSON endpoints for single-word analysis, batch-processing, and generation.
-- **`tests/test_analyzer.py`**: A comprehensive test suite with 134 test cases verifying affix stripping, phonological contractions, edge-case regressions, and negative bounds.
+- **`tests/test_analyzer.py`**: A comprehensive test suite with 135 test cases verifying affix stripping, phonological contractions, edge-case regressions, and negative bounds.
 
 ---
 
@@ -119,7 +119,7 @@ $$\text{Total System Token Coverage} = \mathbf{96.4\%} \quad (515,762 \text{ out
 | **Glottal Stop Normalization** | No | **Yes** (matches spelling variations) |
 | **Proper Name / Loanword Detection** | No | **Yes** (decomposes with affixes) |
 | **Web REST API** | No | **Yes** (Flask/Vercel) |
-| **Test Suite Coverage** | No | **Yes** (134 pytest cases) |
+| **Test Suite Coverage** | No | **Yes** (135 pytest cases) |
 
 ---
 
