@@ -83,6 +83,9 @@ PREFIXES = [
     ("moki",           "intransitive",   "desirous / wanting to",                        "add"),
     ("mokipopookot",   "intransitive",   "very desirous / improbable wish (long form)",  "add"),
     ("mokipopoko",     "intransitive",   "improbable wish",                              "add"),
+
+    # ── Past of mokipopoko (m-in-okipopoko, -in- infix after m-) ─────
+    ("minokipopoko",   "intransitive",   "past improbable wish (mokipopoko + -in-)",      "add"),
     ("mog",            "intransitive",   "intransitive actor focus (mog- variant)",      "none"),
 
     # ── §2.221 Transitive actor-focus prefixes ────────────────────────
@@ -130,6 +133,7 @@ PREFIXES = [
 
     # ── §2.225 Preterit causative prefixes ───────────────────────────
     ("kinopo",         "causative-past", "causative past (voiced C stem)",               "none"),
+    ("kinopong",       "causative-past", "causative past (vowel-initial)",              "sub"),
     ("pinong",         "causative-past", "causative past (vowel-initial)",               "sub"),
     ("kino",           "realisation-past", "realisation past",                           "sub"),
     ("pino",           "causative-past", "causative past",                               "sub"),
@@ -805,16 +809,45 @@ def _lookup_root(root_candidate, dictionary):
             return alt2, dictionary[alt2]
 
     # Case 4: Reversing trailing 'z' to 'i' (e.g., imbulaz -> imbulai)
-    if key.endswith('z'):
-        alt = key[:-1] + 'i'
-        if alt in dictionary:
-            return alt, dictionary[alt]
+    # Two sub-rules:
+    #   (a) strip 'z' entirely  — glottal stop became /z/ after high vowel /i/ or /u/
+    #       e.g., gili' + -on → gilizon → reverse: gilizon → giliz → gili
+    #   (b) replace 'z' with 'i' — non-syllabic /i/ became /z/ before suffix
+    #       e.g., valai + -an → valaizan → reverse: valaizan → valaiz → valai
+    if key.endswith('z') and len(key) > 2:
+        # (a) strip z entirely (glottal stop origin)
+        alt_strip = key[:-1]
+        if alt_strip in dictionary:
+            return alt_strip, dictionary[alt_strip]
+        # (b) replace z with i (non-syllabic /i/ origin)
+        alt_repl = key[:-1] + 'i'
+        if alt_repl in dictionary:
+            return alt_repl, dictionary[alt_repl]
 
-    # Case 5: Strip acoustic trailing 'h' (e.g., umbasih -> umbasi)
+    # Case 5: Epenthetic /d/ glide between vowel-final prefix and vowel-initial root
+    # e.g., mokipopoko + imot → mokipopokodimot ('d' breaks o+i hiatus)
+    # Reverse: strip the epenthetic 'd' to recover the root
+    if key.startswith('d') and len(key) > 2:
+        alt_drop = key[1:]
+        if alt_drop in dictionary:
+            return alt_drop, dictionary[alt_drop]
+
+    # Case 6: Strip acoustic trailing 'h' (e.g., umbasih -> umbasi)
+    #         or replace with 'u' (non-syllabic /u/ → /h/, e.g., asalau + -on → asalahon)
     if key.endswith('h') and len(key) > 3:
-        alt = key[:-1]
-        if alt in dictionary:
-            return alt, dictionary[alt]
+        # (a) Replace trailing 'h' with 'u' first (productive phonological rule:
+        #     non-syllabic /u/ becomes /h/ before a suffix; reversing it is
+        #     higher-priority than stripping acoustic /h/).
+        alt_repl = key[:-1] + 'u'
+        if alt_repl in dictionary:
+            # Check that the h→u result is not a subentry (or we're replacing
+            # into a direct entry) — prefer a direct entry over a subentry match
+            # from the acoustic-strip path below.
+            return alt_repl, dictionary[alt_repl]
+        # (b) Strip acoustic 'h' entirely (lexical /h/ that isn't from /u/)
+        alt_strip = key[:-1]
+        if alt_strip in dictionary:
+            return alt_strip, dictionary[alt_strip]
             
     return None, None
 
@@ -880,8 +913,14 @@ def try_strip_prefixes(word, dictionary):
         #   prefix's terminal vowel with stem's initial vowel.  Restore it by
         #   prepending the contracted vowel to remainder.
         if sub_type in ('sub', 'add'):
-            # Consonant-substituting prefixes only apply to consonant-initial stems
+            # Consonant-substituting prefixes normally apply only to
+            # consonant-initial stems, but some ('sub'-type like pa-, ma-,
+            # po-, mo-) can also attach to vowel-initial stems via vowel
+            # contraction (e.g., pa- + asalau → pasalau, a+a→a).
+            # Try both the plain remainder AND vowel de-contraction.
             decontracted = [remainder]
+            if sub_type == 'sub':
+                decontracted.extend(decontract_vowel(prefix_str, remainder))
         else:
             decontracted = decontract_vowel(prefix_str, remainder)
         candidates = []
@@ -1013,6 +1052,7 @@ def try_strip_prefixes(word, dictionary):
                         cands2.add(rc2)
                 cands2.add(remainder2)
                 for root2 in cands2:
+                    # Try direct root lookup first
                     lk4, entry4 = _lookup_root(root2, dictionary)
                     if lk4:
                         results.append({
@@ -1026,6 +1066,26 @@ def try_strip_prefixes(word, dictionary):
                             "matched":         True,
                         })
                         break  # one stacked hit is enough
+
+                    # Also try stripping suffixes from the final remainder
+                    for suf2_str, suf2_cat, suf2_meaning in SUFFIXES:
+                        if root2.endswith(suf2_str) and len(root2) > len(suf2_str) + 1:
+                            core2 = root2[:-len(suf2_str)]
+                            lk5, entry5 = _lookup_root(core2, dictionary)
+                            if lk5:
+                                results.append({
+                                    "prefix":          prefix_str,
+                                    "category":        category,
+                                    "meaning":         meaning,
+                                    "prefix2":         prefix2_str,
+                                    "prefix2_meaning": f"{meaning2} ({cat2})",
+                                    "suffix":          suf2_str,
+                                    "suffix_meaning":  f"{suf2_meaning} ({suf2_cat})",
+                                    "root":            lk5,
+                                    "gloss":           entry5["gloss"],
+                                    "matched":         True,
+                                })
+                                break  # one suffix hit per stacked prefix is enough
 
     return results
 
@@ -1145,10 +1205,11 @@ def generate(root, prefix=None, suffix=None, infix=None, enclitic=None):
 
         # Apply vowel contraction at prefix–stem boundary.
         # Note: for mo-/ma- prefixes, the prefix vowel also harmonises:
-        # mo- before a-vowel substituted stem → 'ma-' (a-harmony).
-        # e.g., mo + panau → mo + manau → 'mamanau' (o→a harmony before 'a').
+        # mo- before an a-vowel substituted stem → 'ma-' (a-harmony based
+        # on the substituted stem's vowel content).
+        # e.g., mo + panau → mo + manau → 'mamanau' (o→a harmony).
         effective_prefix = prefix
-        if prefix in ('mo', 'mong', 'mongo', 'moko', 'mongo') and form and form[0] == 'a':
+        if prefix in ('mo', 'mong', 'mongo', 'moko') and form and 'a' in form:
             # a-vowel harmony: the prefix vowel shifts from 'o' to 'a'
             effective_prefix = prefix.replace('o', 'a', 1)
         elif prefix in ('mo',) and form and form[0] in 'aeiou':
@@ -1339,18 +1400,66 @@ def analyze(word, dictionary):
                            [f"root: '{variant}' = \"{dictionary[variant]['gloss']}\" (vowel variant of '{working}')"])
                 return result
 
-    # ── Step 4: Strip infix (bare root before any prefix) ────────────
+    # ── Step 4: Strip infix (bare root or prefixed word containing infix) ──
     # Try infix on the working form first (for bare-root infixed words
-    # like rumikot, rinumikot that have no prefix).
+    # like rumikot, rinumikot that have no prefix, and also for verbs
+    # where the infix is inserted inside the prefix, e.g. nongokodop -> n-ong-okodop).
     infix_str, infix_cat, infix_meaning, after_infix = strip_infix(working)
     if infix_str:
-        result["infix"] = infix_str
-        result["infix_meaning"] = infix_meaning
-        result["breakdown"].append(f"infix: -{infix_str}- = {infix_meaning}")
+        # Try direct lookup first
         lk, entry = _lookup_root(after_infix, dictionary)
         if lk:
+            result["infix"] = infix_str
+            result["infix_meaning"] = infix_meaning
+            result["breakdown"].append(f"infix: -{infix_str}- = {infix_meaning}")
             _set_match(after_infix, 0.85, [f"root: '{after_infix}' = \"{entry['gloss']}\""])
             return result
+        
+        # Fallback: recursively analyze the remainder if not found directly
+        sub_r = analyze(after_infix, dictionary)
+        if sub_r["matched"]:
+            # Guard: only accept if the root is genuinely a real dictionary entry,
+            # standalone word, proper name, or loanword.  This prevents false
+            # parses like pinongimot → -in- → pongimot → -ong- → pimot → pi- + pot
+            # where 'pot' is only a function word (not a real root).
+            _sub_root = sub_r.get("root", "").strip().lower()
+            _sub_root_is_real = (
+                _sub_root in dictionary
+                or _sub_root in STANDALONE_WORDS
+                or sub_r.get("proper_name")
+                or sub_r.get("loanword")
+            )
+            if not _sub_root_is_real:
+                # Fall through to prefix/suffix stripping
+                pass
+            else:
+                result["infix"] = infix_str
+                result["infix_meaning"] = infix_meaning
+                result["root"] = sub_r["root"]
+                result["root_gloss"] = sub_r["root_gloss"]
+                result["matched"] = True
+                result["confidence"] = sub_r["confidence"] * 0.90
+            
+            # Copy other matched features from recursive step
+            if sub_r["prefix"]:
+                result["prefix"] = sub_r["prefix"]
+                result["prefix_meaning"] = sub_r["prefix_meaning"]
+            if sub_r["prefix2"]:
+                result["prefix2"] = sub_r["prefix2"]
+                result["prefix2_meaning"] = sub_r["prefix2_meaning"]
+            if sub_r["suffix"]:
+                result["suffix"] = sub_r["suffix"]
+                result["suffix_meaning"] = sub_r["suffix_meaning"]
+            if sub_r["enclitic"]:
+                result["enclitic"] = sub_r["enclitic"]
+                result["enclitic_meaning"] = sub_r["enclitic_meaning"]
+            result["proper_name"] = sub_r["proper_name"]
+            result["loanword"] = sub_r["loanword"]
+            
+            result["breakdown"].append(f"infix: -{infix_str}- = {infix_meaning}")
+            result["breakdown"].extend(sub_r["breakdown"])
+            return result
+
 
     # ── Step 5: Strip suffixes ────────────────────────────────────────
     suf_str, suf_cat, suf_meaning, suf_entry = try_strip_suffixes(working, dictionary)
