@@ -1,8 +1,8 @@
-# Rungus Morphological Analyzer & Translator (v3.0)
+# Rungus Morphological Analyzer & Translator (v3.1)
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-136%20passed-success.svg)](./tests/)
-[![Corpus Token Coverage](https://img.shields.io/badge/corpus%20coverage-96.4%25-brightgreen.svg)](#performance-metrics)
+[![Tests](https://img.shields.io/badge/tests-158%20passed-success.svg)](./tests/)
+[![Corpus Token Coverage](https://img.shields.io/badge/corpus%20coverage-96.9%25-brightgreen.svg)](#performance-metrics)
 
 An advanced, high-performance morphological analyzer and lexicon database for **Rungus** (ISO 639-3: `drg`), an endangered Austronesian language spoken by the Momogun people of Kudat, Sabah, Malaysia. 
 
@@ -90,36 +90,76 @@ The analyzer handles two types of reduplication:
 - **Full (Hyphenated)**: e.g., `agas-agas` $\rightarrow$ root `agas`.
 - **CV-Prefix Reduplication**: The repeating of the initial syllable of a prefixed verb to denote habitual or continuous action (e.g. `mamamanau` $\rightarrow$ base `mamanau` $\rightarrow$ root `panau`).
 
+### 5. Vowel Harmony (Dreiheller p.c. 2026)
+When a suffix attaches to a root whose **final vowel is high** (/u/ or /i/), the root's /a/ vowels shift to /o/:
+
+| Root | Suffixed form | Rule applied |
+|---|---|---|
+| `aparu` (hardworking) | `koporuo`, `oporuan` | a→o ×2 + kA-…-o circumfix |
+| `ganti` (exchange) | `gontian` | a→o |
+| `janji` (agreement) | `jonjizon` | a→o ×2 + /z/ glide |
+
+The analyzer reverses this harmony during analysis, including **two-rule compositions** (`jonjizon` → strip `-on` → strip glide `/z/` → restore a-vowels → `janji`).
+
+### 6. Glide Insertion
+Root-final high vowels take a glide before vowel-initial suffixes: /i/ + suffix → `-iz-` (`janji + -on → jonjizon`), /u/ + suffix → `-uv-` (`ko- + sundu + -o → kosunduvo`).
+
+### 7. L/R/D Alternation (Dreiheller p.c. 2026)
+**L and R are interchangeable root-finally**, and **after a nasal both become D**:
+
+| Root | Derived form | Rule applied |
+|---|---|---|
+| `sikul` (school) | `posikuron` | l→r before suffix |
+| `habal` (news) | `habaran` | l→r before suffix |
+| `ralan` (path) | `endalanan` | r→d after nasal |
+| `araat` (bad) | `mongindaraat` | r→d after nasal |
+
+### 8. Four-Voice System (Kroeger; Dreiheller p.c. 2026)
+Rungus — like neighbouring Kimaragang (Kroeger) — is a **Philippine-type symmetrical-voice language** with four voices marked on the verb, not on the noun phrase. The analyzer derives the voice of every parsed verb form:
+
+| Voice | Marker | ≈ European analogue | Focused NP |
+|---|---|---|---|
+| **Agent** | `mAN-`, `pAN-`, `-um-` | nominative | the actor |
+| **Undergoer** | `-on` (past `-in-`) | accusative | the patient |
+| **Beneficiary/Locative** | `-an` (past `-in-…-an`) | dative | recipient, beneficiary, location |
+| **Conveyance** ("mobile object") | `i-`, `ni-` | — | object given, thrown, or moved |
+
+The focused NP takes the focus article `o/ot` (indefinite) or `i/it` (definite); non-focus NPs take `do/dot/di/dit`. Basic word order is VSO.
+
 ---
 
 ## 📈 Performance Metrics
 
 ### Token Coverage on 534,775-Token Corpus
-We evaluated version 3.0 of our analyzer against a large-scale corpus consisting of Rungus folk tales and biblical translations:
+We evaluated version 3.1 of our analyzer against a large-scale corpus consisting of Rungus folk tales and biblical translations:
 
-| Category | Unique Words | % of Unique | Tokens | % of Tokens |
-|---|---|---|---|---|
-| **Direct Dictionary Match** | 1,545 | 8.8% | 130,849 | 24.5% |
-| **Decomposed via Affixes** | 9,292 | 52.8% | 150,412 | 28.1% |
-| **Proper Names (Biblical/Geo)** | 117 | 0.7% | 23,235 | 4.3% |
-| **Loanwords (Malay/Arabic)** | 188 | 1.1% | 11,933 | 2.2% |
-| **Grammatical Function Words** | 44 | 0.3% | 199,333 | 37.3% |
-| **Failed (Unanalyzed)** | 6,399 | 36.4% | 19,013 | 3.6% |
-| **TOTAL** | **17,586** | **100.0%** | **534,775** | **100.0%** |
+| Category | Unique Words | % of Unique | Tokens |
+|---|---|---|---|
+| **Direct Dictionary Match** | 1,521 | 8.6% | 130,686 |
+| **Decomposed via Affixes** | 10,302 | 58.6% | 152,989 |
+| **Proper Names (Biblical/Geo)** | 124 | 0.7% | 23,242 |
+| **Loanwords (Malay/Arabic)** | 204 | 1.2% | 12,040 |
+| **Grammatical Function Words** | 44 | 0.3% | 199,333 |
+| **Failed (Unanalyzed)** | 5,391 | 30.7% | 16,485 |
+| **TOTAL** | **17,586** | **100.0%** | **534,775** |
 
-$$\text{Total System Token Coverage} = \mathbf{96.4\%} \quad (515,762 \text{ out of } 534,775 \text{ tokens})$$
+$$\text{Total System Token Coverage} = \mathbf{96.9\%} \quad (518,290 \text{ out of } 534,775 \text{ tokens})$$
+
+**v3.0 → v3.1 delta** (after implementing Christine Dreiheller's morphophonological rules): unanalyzed unique word types fell from 6,399 to 5,391 (**−15.8%**); affix-decomposed types rose from 9,292 to 10,302 (**+1,010**); token coverage rose from 96.4% to 96.9%.
 
 ### Comparison with Swarthmore Transducer (LING073)
 
-| Metric | Swarthmore Transducer | Antigravity Rungus Analyzer (v3.0) |
+| Metric | Swarthmore Transducer | This Rungus Analyzer (v3.1) |
 |---|---|---|
 | **Lexicon Size** | 100 stems | **13,234 entries** (132x larger) |
-| **Corpus Coverage** | 35.8% | **96.4%** (2.7x higher) |
+| **Corpus Coverage** | 35.8% | **96.9%** (2.7x higher) |
+| **Voice System Analysis** | No | **Yes** (4-voice Philippine-type) |
+| **Vowel Harmony / L-R-D Rules** | No | **Yes** (expert-validated) |
 | **Reduplication Support** | No | **Yes** (full and CV-prefix) |
 | **Glottal Stop Normalization** | No | **Yes** (matches spelling variations) |
 | **Proper Name / Loanword Detection** | No | **Yes** (decomposes with affixes) |
 | **Web REST API** | No | **Yes** (Flask/Vercel) |
-| **Test Suite Coverage** | No | **Yes** (136 pytest cases) |
+| **Test Suite Coverage** | No | **Yes** (158 pytest cases) |
 
 ---
 
@@ -232,6 +272,10 @@ When adding new affixes, append them to `PREFIXES`, `SUFFIXES`, `INFIXES`, or `E
 ---
 
 ## 📚 References
-- **Forschner, T. A. (1994)**. *Outline of a Momogun Grammar (Rungus Dialect)*. Sabah Museum Monograph.
+- **Forschner, T. A. (1994)**. *Outline of a Momogun Grammar (Rungus Dialect)*. Sabah Museum Monograph. *(Caution per SIL: Forschner's Eurocentric framework understates the Austronesian voice system; not all his published texts were authored by native speakers.)*
+- **Kroeger, P.** Articles on **Kimaragang grammar** — the closest well-described relative of Rungus; source of the four-voice symmetrical-voice analysis adopted in v3.1.
 - **SIL International (2026)**. *Rungus Dictionary*. SIL Webonary.
 - **Swarthmore College (2025)**. *LING073 Rungus Transducer and Morphological Analyzer*.
+
+## 🙏 Acknowledgements
+- **Christine Dreiheller (SIL Global)** — expert review of the v3.0 prototype (p.c. 6 July 2026): the vowel-harmony rule, the L/R/D alternation rule, the kA- polysemy correction, and the four-voice framing implemented in v3.1 all come directly from her feedback.

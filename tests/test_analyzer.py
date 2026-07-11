@@ -692,3 +692,105 @@ class TestBackwardCompat:
         assert r1["root"] == r2["root"]
         assert r1["prefix"] == r2["prefix"]
         assert r1["matched"] == r2["matched"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 19. CHRISTINE DREIHELLER'S RULES  (SIL Global, p.c. 6 July 2026)
+# ═══════════════════════════════════════════════════════════════════════
+# Every example in this section is verbatim from Christine's email of
+# 6 July 2026 reviewing the v3.0 prototype.
+
+class TestVowelHarmony:
+    """'In a word like aparu, when you add a suffix, the A is changed to O
+    after a root final high vowel u or i (e.g. aparu, koporuo, oporuan;
+    ganti, gontian; janji, jonjizon).'"""
+
+    @pytest.mark.parametrize("word,expected_roots", [
+        ("koporuo",  {"aparu", "paru"}),   # kA- + aparu + -o
+        ("oporuan",  {"aparu", "paru"}),   # aparu + -an
+        ("gontian",  {"ganti"}),           # ganti + -an
+        ("jonjizon", {"janji"}),           # janji + -on (with /z/ glide)
+    ])
+    def test_vowel_harmony_reversal(self, dictionary, word, expected_roots):
+        r = analyze(word, dictionary)
+        assert r["matched"], f"'{word}' should be analyzable"
+        assert r["root"].lower() in expected_roots, (
+            f"'{word}': expected root in {expected_roots}, got '{r['root']}'"
+        )
+
+
+class TestLRDAlternation:
+    """'L and R are interchangeable root finally, and after a nasal become D
+    (e.g. sikul, posikuron; habal, habaran; araat, mongindaraat;
+    ralan, endalanan; longoi, mindolongoi).'"""
+
+    @pytest.mark.parametrize("word,expected_roots", [
+        ("posikuron",    {"sikul"}),            # sikul + po-...-on, l→r
+        ("habaran",      {"habal"}),            # habal + -an, l→r
+        ("endalanan",    {"ralan"}),            # ralan + past + -an, r→d after nasal
+        ("mongindaraat", {"araat", "ra'at"}),   # r→d after nasal
+        ("mindolongoi",  {"longoi"}),           # subentry-resolved
+    ])
+    def test_lrd_alternation(self, dictionary, word, expected_roots):
+        r = analyze(word, dictionary)
+        assert r["matched"], f"'{word}' should be analyzable"
+        assert r["root"].lower() in expected_roots, (
+            f"'{word}': expected root in {expected_roots}, got '{r['root']}'"
+        )
+
+
+class TestGlideInsertion:
+    """Root-final high vowels take a /z/ or /v/ glide before vowel-initial
+    suffixes: janji + -on → jonjizon; ko- + sundu + -o → kosunduvo."""
+
+    def test_v_glide_kosunduvo(self, dictionary):
+        r = analyze("kosunduvo", dictionary)
+        assert r["matched"]
+        assert r["root"].lower() == "sundu"
+
+    def test_v_glide_konoruvo(self, dictionary):
+        r = analyze("konoruvo", dictionary)
+        assert r["matched"]
+        assert r["root"].lower() in ("anaru", "naru")
+
+
+class TestVoiceSystem:
+    """'Rungus has 4 voices … agent focus (e.g. mAN-, pAN-) … undergoer
+    focus (-on, past -in-) … beneficiary/location/recipient focus (-an,
+    past -in- -an) … the mobile object focus (i-, ni-).'  (Kroeger's
+    Kimaragang four-voice analysis.)"""
+
+    @pytest.mark.parametrize("word,expected_voice", [
+        ("mamanau",   "agent"),         # mAN- actor focus
+        ("mongoduat", "agent"),         # mAN- actor focus
+        ("rumikot",   "agent"),         # -um- actor infix
+        ("lobongon",  "undergoer"),     # -on patient focus
+        ("jonjizon",  "undergoer"),     # -on patient focus
+        ("habaran",   "beneficiary"),   # -an beneficiary/locative focus
+        ("gontian",   "beneficiary"),   # -an beneficiary/locative focus
+        ("endalanan", "beneficiary"),   # past -in-...-an
+    ])
+    def test_voice(self, dictionary, word, expected_voice):
+        r = analyze(word, dictionary)
+        assert r["matched"], f"'{word}' should be analyzable"
+        assert r["voice"] == expected_voice, (
+            f"'{word}': expected voice '{expected_voice}', got '{r['voice']}'"
+        )
+
+    def test_nominalized_circumfix_has_no_voice(self, dictionary):
+        """kA-...-o forms are nominals, not voice-marked verbs."""
+        r = analyze("kosunduvo", dictionary)
+        assert r["matched"]
+        assert r["voice"] is None
+
+    def test_voice_fields_always_present(self, dictionary):
+        """Every analysis result must carry voice/voice_meaning keys."""
+        for w in ("mamanau", "xyzzy", "yesus"):
+            r = analyze(w, dictionary)
+            assert "voice" in r and "voice_meaning" in r
+
+    def test_ka_polysemy_documented(self):
+        """kA- gloss must record its polysemy ('can', 'just now',
+        'come to pass') per Christine's correction."""
+        ko = [p for p in PREFIXES if p[0] == "ko" and p[1] == "realisation"]
+        assert ko and "can" in ko[0][2]

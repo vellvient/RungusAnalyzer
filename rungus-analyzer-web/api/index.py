@@ -104,6 +104,8 @@ def _analyze_one(word: str) -> dict:
         "suffix_meaning":   r["suffix_meaning"],
         "enclitic":         r["enclitic"],
         "enclitic_meaning": r["enclitic_meaning"],
+        "voice":            r.get("voice"),
+        "voice_meaning":    r.get("voice_meaning"),
         "breakdown":        r["breakdown"],
         "proper_name":      r["proper_name"],
         "loanword":         r["loanword"],

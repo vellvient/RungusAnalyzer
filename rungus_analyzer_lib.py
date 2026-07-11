@@ -138,14 +138,17 @@ PREFIXES = [
     ("kino",           "realisation-past", "realisation past",                           "sub"),
     ("pino",           "causative-past", "causative past",                               "sub"),
     ("in",             "perfective",     "past / perfective (vowel-initial)",            "none"),
+    ("en",             "perfective",     "past / perfective (in- e-variant, before nasal+D roots)", "none"),
     ("um",             "intransitive",   "intransitive process (vowel-initial)",         "none"),
     ("inum",           "intransitive-past","past intransitive (vowel-initial)",           "none"),
 
     # ── §2.224 Realisation / potential prefixes ───────────────────────
     ("kopio",          "intensive",      "extremely / truly",                            "none"),
     ("kopi",           "transitive",     "reciprocal / dual action",                     "none"),
-    ("ko",             "realisation",    "realisation / potentiality",                   "sub"),
-    ("ka",             "realisation",    "realisation / potentiality (a-stem)",          "sub"),
+    # kA- is polysemous (Christine Dreiheller p.c.): realisation /
+    # potentiality, but also "can", "just now", "come to pass".
+    ("ko",             "realisation",    "realisation / potential ('can', 'just now', 'come to pass')",  "sub"),
+    ("ka",             "realisation",    "realisation / potential ('can', 'just now', 'come to pass') (a-stem)", "sub"),
     ("kapa",           "realisation",    "completed action (a-stem)",                    "sub"),
     ("kopo",           "realisation",    "completed action (o-stem)",                    "sub"),
     ("ki",             "have",           "have / possess / use",                         "none"),
@@ -171,6 +174,16 @@ PREFIXES = [
     # ── §1.31 Intensifier prefixes ────────────────────────────────────
     ("ta",             "intensifier",    "intensifier (extremely)",                      "none"),
     ("to",             "intensifier",    "intensifier (extremely, o-variant)",           "none"),
+
+    # ── Mobile object / conveyance focus (Kroeger 2005 on Kimaragang;
+    #    Christine Dreiheller p.c. 6 July 2026: "the mobile object focus
+    #    (i-, ni-) for any object in focus which is given, thrown or
+    #    otherwise permanently moved") ──────────────────────────────────
+    ("i",              "object-focus",   "mobile object focus (conveyance voice)",       "none"),
+    ("ni",             "object-focus",   "mobile object focus PAST (conveyance voice)",  "none"),
+
+    # ── Potential / capability (Christine Dreiheller p.c.: toro-) ─────
+    ("toro",           "potential",      "capability / potential (toro-)",               "none"),
 ]
 
 # Sort longest-first so longer prefixes are tried before shorter ones
@@ -226,6 +239,88 @@ ENCLITICS = [
 
 # Sorted longest-first
 ENCLITICS = sorted(ENCLITICS, key=lambda x: len(x[0]), reverse=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 2b. VOICE SYSTEM  (Philippine-type symmetrical voice — 4 voices)
+# ═══════════════════════════════════════════════════════════════════════
+# Rungus, like Kimaragang (Kroeger), has FOUR voices, marked on the verb
+# rather than on the noun phrase (Christine Dreiheller p.c. 6 July 2026):
+#
+#   agent voice        mAN-, pAN-        (≈ European nominative)
+#   undergoer voice    -on, past -in-    (≈ European accusative)
+#   beneficiary voice  -an, past -in-…-an (≈ European dative; also locative/recipient)
+#   conveyance voice   i-, ni-           ("mobile object focus": object
+#                                          given, thrown or permanently moved)
+#
+# The NP in focus takes the focus article o/ot (indefinite) or i/it
+# (definite); non-focus NPs take do/dot/di/dit.  Basic word order is VSO.
+
+AGENT_FOCUS_PREFIXES = {
+    'mo', 'ma', 'mong', 'mang', 'mongo', 'manga', 'moko',
+    'minong', 'mino', 'min', 'mog', 'nokopong',
+    'pong', 'ponga', 'pongi', 'pog', 'm',
+    'pinong', 'pino',   # pAN- with infixed -in- (past)
+}
+
+PAST_AGENT_PREFIXES = {'minong', 'mino', 'min', 'nokopong', 'pinong', 'pino'}
+
+
+def derive_voice(prefix=None, infix=None, suffix=None, prefix2=None):
+    """Derive the grammatical voice of an analyzed verb form from its
+    affix combination (Kroeger's four-voice Philippine-type analysis).
+
+    Returns (voice, description) or (None, None) when no voice can be
+    inferred (bare roots, nominals, particles).
+    """
+    past = infix in ('in', 'inum') or prefix in ('in', 'en')
+
+    # kA-...-o / kA-...-an are nominalizing circumfixes, not voice marks
+    if prefix in ('ko', 'ka') and suffix in ('o', 'an'):
+        return None, None
+
+    # Beneficiary / locative / recipient voice: -an (past -in-...-an)
+    if suffix in ('an', 'anon'):
+        return ('beneficiary',
+                "beneficiary/locative voice (-an" + (", past -in-…-an" if past else "") +
+                "): the recipient, beneficiary or location is in focus")
+
+    # Undergoer (patient) voice: -on (past -in- alone)
+    if suffix in ('on', 'onon'):
+        return ('undergoer',
+                "undergoer voice (-on): the patient/object is in focus")
+
+    # Imperative suffixes still index the voice of the focused NP
+    if suffix == 'o' and prefix not in ('ko', 'ka'):
+        return ('undergoer', "undergoer voice imperative (-o)")
+    if suffix == 'ai':
+        return ('beneficiary', "beneficiary/locative voice imperative (-ai)")
+
+    # Conveyance ("mobile object") voice: i- / ni-
+    if prefix in ('i', 'ni') or prefix2 in ('i', 'ni'):
+        p = prefix if prefix in ('i', 'ni') else prefix2
+        return ('conveyance',
+                "conveyance voice (" + p + "-): a moved/given/thrown object is in focus" +
+                (" — past (ni-)" if p == 'ni' else ""))
+
+    # -um- / -inum- are actor-voice infixes (intransitive process)
+    if infix in ('um', 'inum'):
+        return ('agent',
+                "agent voice (-um- infix): the actor is in focus" +
+                (" — past (-inum-)" if infix == 'inum' else ""))
+
+    # Undergoer past: bare -in- with no agent-focus prefix
+    if past and prefix not in AGENT_FOCUS_PREFIXES:
+        return ('undergoer',
+                "undergoer voice, past (-in-): the patient/object is in focus")
+
+    # Agent voice: mAN- family (actor in focus)
+    if prefix in AGENT_FOCUS_PREFIXES:
+        return ('agent',
+                "agent voice (mAN-/pAN-): the actor is in focus" +
+                (" — past" if past or prefix in PAST_AGENT_PREFIXES else ""))
+
+    return None, None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -752,18 +847,87 @@ def strip_infix(word):
     return None, None, None, word
 
 
+def _phonological_variants(key):
+    """Return a list of candidate root forms produced by reversing ONE
+    Rungus morphophonological rule on `key`.
+
+    Rules (Forschner 1994 §1.2–1.4; Christine Dreiheller p.c. 6 July 2026):
+
+      Vowel harmony  — when a suffix attaches to a root whose final vowel
+        is high (/u/ or /i/), root /a/ vowels shift to /o/:
+        aparu → koporuo, oporuan;  ganti → gontian;  janji → jonjizon.
+        Reverse: try O→A restorations (plus legacy A→O / U→O variants for
+        dialectal vowel alternation).
+
+      Glide insertion — root-final /i/ or /u/ takes a /z/ or /v/ glide
+        before a vowel-initial suffix:  janji + -on → jonjizon,
+        sundu + -o → kosunduvo.  Reverse: strip or restore the glide.
+
+      L/R interchange — L and R are interchangeable root-finally, and
+        after a nasal both become D:  sikul → posikuron,
+        habal → habaran, ralan → endalanan, araat → mongindaraat.
+        Reverse: swap final r↔l; initial d → r / l / ∅ (epenthetic).
+
+      Acoustic /h/ — non-syllabic /u/ → /h/ before suffix (asalau →
+        asalahon), or purely acoustic final /h/.
+    """
+    out = []
+    # Vowel harmony reversal O→A (koporuo→(a)paru, gontian→ganti)
+    if 'o' in key:
+        out.append(key.replace('o', 'a', 1))
+        if key.endswith('o'):
+            out.append(key[:-1].replace('o', 'a') + 'o')
+        out.append(key.replace('o', 'a'))
+    # Dialectal A→O (tapat → topot)
+    if 'a' in key:
+        out.append(key.replace('a', 'o'))
+        out.append(key.replace('a', 'o', 1))
+    # U→O lowering (ondus → ondos)
+    if 'u' in key:
+        out.append(key.replace('u', 'o'))
+        out.append(key.replace('u', 'o', 1))
+    # Glide /z/ after root-final high vowel (gilizon → gili; valaizan → valai)
+    if key.endswith('z') and len(key) > 2:
+        out.append(key[:-1])
+        out.append(key[:-1] + 'i')
+    # Glide /v/ after root-final /u/ (kosunduvo → sundu)
+    if key.endswith('v') and len(key) > 2:
+        out.append(key[:-1])
+    # Initial d: epenthetic /d/ (mokipopokodimot), or L/R→D after nasal
+    # (mong-in-daraat → araat/ra'at; en-dalan-an → ralan)
+    if key.startswith('d') and len(key) > 2:
+        out.append(key[1:])
+        out.append('r' + key[1:])
+        out.append('l' + key[1:])
+    # Acoustic /h/ (asalahon → asalau; umbasih → umbasi)
+    if key.endswith('h') and len(key) > 3:
+        out.append(key[:-1] + 'u')
+        out.append(key[:-1])
+    # Root-final L/R interchange (posikuron → sikur → sikul; habaran → habar → habal)
+    if key.endswith('r') and len(key) > 3:
+        out.append(key[:-1] + 'l')
+    if key.endswith('l') and len(key) > 3:
+        out.append(key[:-1] + 'r')
+    return out
+
+
 def _lookup_root(root_candidate, dictionary):
     """Try to find root_candidate in dictionary, passing through
     VIRTUAL_ROOTS if needed.  Returns (lookup_key, entry) or (None, None).
+
+    Falls back to reversing morphophonological rules (vowel harmony,
+    glide insertion, L/R/D alternation — see _phonological_variants),
+    including two-rule compositions such as jonjizon → jonjiz → jonji →
+    janji (glide strip + vowel-harmony reversal).
     """
     key = root_candidate
     if key in VIRTUAL_ROOTS:
         key = VIRTUAL_ROOTS[key]
-        
+
     keys_to_try = [key]
     if key.endswith('v') and len(key) > 2:
         keys_to_try.append(key[:-1])
-        
+
     for k in keys_to_try:
         if k in dictionary:
             entry = dictionary[k]
@@ -780,76 +944,43 @@ def _lookup_root(root_candidate, dictionary):
         if k in FUNCTION_WORDS:
             return k, {"headword": root_candidate, "gloss": "grammatical function word / particle", "is_subentry": False}
 
-    # Reversal of vowel harmony (a <-> o)
-    # Case 1: Reversing 'o' to 'a' (e.g., gozo -> gazo, tonid -> tanid)
-    if 'o' in key:
-        alt = key.replace('o', 'a', 1)
-        if alt in dictionary:
-            return alt, dictionary[alt]
-        if key.endswith('o'):
-            alt2 = key[:-1].replace('o', 'a') + 'o'
-            if alt2 in dictionary:
-                return alt2, dictionary[alt2]
+    def _entry_for(k):
+        """Dictionary hit with subentry→parent resolution."""
+        entry = dictionary.get(k)
+        if entry is None:
+            return None, None
+        if entry.get("is_subentry") and entry.get("parent"):
+            parent = entry["parent"].strip().lower()
+            if parent in dictionary:
+                return parent, dictionary[parent]
+        return k, entry
 
-    # Case 2: Reversing 'a' to 'o' (e.g., tapat -> topot)
-    if 'a' in key:
-        alt = key.replace('a', 'o')
-        if alt in dictionary:
-            return alt, dictionary[alt]
-        alt2 = key.replace('a', 'o', 1)
-        if alt2 in dictionary:
-            return alt2, dictionary[alt2]
+    # ── Depth 1: single morphophonological rule reversal ─────────────
+    seen = {key}
+    depth1 = []
+    for alt in _phonological_variants(key):
+        if not alt or alt in seen:
+            continue
+        seen.add(alt)
+        depth1.append(alt)
+        k2, e2 = _entry_for(alt)
+        if k2:
+            return k2, e2
 
-    # Case 3: Reversing 'u' to 'o' (e.g., ondus -> ondos, oondus -> oondos)
-    if 'u' in key:
-        alt = key.replace('u', 'o')
-        if alt in dictionary:
-            return alt, dictionary[alt]
-        alt2 = key.replace('u', 'o', 1)
-        if alt2 in dictionary:
-            return alt2, dictionary[alt2]
+    # ── Depth 2: composition of two rules ─────────────────────────────
+    # Needed when two rules apply in one derivation, e.g. janji + -on →
+    # jonjizon (glide /z/ + vowel harmony A→O).  Restricted to keys of
+    # length ≥ 5 to limit false positives on short candidates.
+    if len(key) >= 5:
+        for alt in depth1:
+            for alt2 in _phonological_variants(alt):
+                if not alt2 or alt2 in seen:
+                    continue
+                seen.add(alt2)
+                k2, e2 = _entry_for(alt2)
+                if k2:
+                    return k2, e2
 
-    # Case 4: Reversing trailing 'z' to 'i' (e.g., imbulaz -> imbulai)
-    # Two sub-rules:
-    #   (a) strip 'z' entirely  — glottal stop became /z/ after high vowel /i/ or /u/
-    #       e.g., gili' + -on → gilizon → reverse: gilizon → giliz → gili
-    #   (b) replace 'z' with 'i' — non-syllabic /i/ became /z/ before suffix
-    #       e.g., valai + -an → valaizan → reverse: valaizan → valaiz → valai
-    if key.endswith('z') and len(key) > 2:
-        # (a) strip z entirely (glottal stop origin)
-        alt_strip = key[:-1]
-        if alt_strip in dictionary:
-            return alt_strip, dictionary[alt_strip]
-        # (b) replace z with i (non-syllabic /i/ origin)
-        alt_repl = key[:-1] + 'i'
-        if alt_repl in dictionary:
-            return alt_repl, dictionary[alt_repl]
-
-    # Case 5: Epenthetic /d/ glide between vowel-final prefix and vowel-initial root
-    # e.g., mokipopoko + imot → mokipopokodimot ('d' breaks o+i hiatus)
-    # Reverse: strip the epenthetic 'd' to recover the root
-    if key.startswith('d') and len(key) > 2:
-        alt_drop = key[1:]
-        if alt_drop in dictionary:
-            return alt_drop, dictionary[alt_drop]
-
-    # Case 6: Strip acoustic trailing 'h' (e.g., umbasih -> umbasi)
-    #         or replace with 'u' (non-syllabic /u/ → /h/, e.g., asalau + -on → asalahon)
-    if key.endswith('h') and len(key) > 3:
-        # (a) Replace trailing 'h' with 'u' first (productive phonological rule:
-        #     non-syllabic /u/ becomes /h/ before a suffix; reversing it is
-        #     higher-priority than stripping acoustic /h/).
-        alt_repl = key[:-1] + 'u'
-        if alt_repl in dictionary:
-            # Check that the h→u result is not a subentry (or we're replacing
-            # into a direct entry) — prefer a direct entry over a subentry match
-            # from the acoustic-strip path below.
-            return alt_repl, dictionary[alt_repl]
-        # (b) Strip acoustic 'h' entirely (lexical /h/ that isn't from /u/)
-        alt_strip = key[:-1]
-        if alt_strip in dictionary:
-            return alt_strip, dictionary[alt_strip]
-            
     return None, None
 
 
@@ -900,9 +1031,14 @@ def try_strip_prefixes(word, dictionary):
         # Require a meaningful remainder (at least 2 chars after prefix)
         # Guard: short ambiguous prefixes require a longer remainder
         if prefix_str in ('no', 'mo', 'ma', 'ko', 'ka', 'po', 'pa',
-                          'ta', 'to', 'ti', 'mu', 'mi', 'pi', 'm', 'o', 'a'):
+                          'ta', 'to', 'ti', 'mu', 'mi', 'pi', 'm', 'o', 'a',
+                          'ni', 'in', 'en', 'um'):
             if len(word) - len(surface_prefix) < 3:
                 continue
+        # i- (mobile object focus) is a single vowel — require a longer
+        # remainder to avoid rampant false positives.
+        if prefix_str == 'i' and len(word) - len(surface_prefix) < 4:
+            continue
 
         remainder = word[len(surface_prefix):]
 
@@ -915,12 +1051,14 @@ def try_strip_prefixes(word, dictionary):
         #   prepending the contracted vowel to remainder.
         if sub_type in ('sub', 'add'):
             # Consonant-substituting prefixes normally apply only to
-            # consonant-initial stems, but some ('sub'-type like pa-, ma-,
-            # po-, mo-) can also attach to vowel-initial stems via vowel
-            # contraction (e.g., pa- + asalau → pasalau, a+a→a).
-            # Try both the plain remainder AND vowel de-contraction.
+            # consonant-initial stems, but the causative/realisation family
+            # (pa-, po-, ko-, ka-, …) can also attach to vowel-initial stems
+            # via vowel contraction (e.g., pa- + asalau → pasalau, a+a→a).
+            # Actor-focus mAN- prefixes are excluded: vowel-initial stems
+            # take mong-/mang- (with the nasal), never bare mo-/ma-, so
+            # de-contracting them creates false parses like ma+amas←mamas.
             decontracted = [remainder]
-            if sub_type == 'sub':
+            if sub_type == 'sub' and not prefix_str.startswith('m'):
                 decontracted.extend(decontract_vowel(prefix_str, remainder))
         else:
             decontracted = decontract_vowel(prefix_str, remainder)
@@ -1025,7 +1163,12 @@ def try_strip_prefixes(word, dictionary):
                             resolved_suf_meaning = suf_meaning
                             resolved_category    = category
                             if prefix_str in ('ko', 'ka') and suffix_str == 'o':
-                                resolved_suf_meaning = "abstract noun nominalizer (ko-...-o circumfix)"
+                                resolved_suf_meaning = "abstract noun nominalizer (kA-...-o circumfix)"
+                                resolved_category    = "nominal"
+                            elif prefix_str in ('ko', 'ka') and suffix_str == 'an':
+                                # kA-...-an differs in meaning from kA-...-o
+                                # (Christine Dreiheller p.c. 6 July 2026)
+                                resolved_suf_meaning = "abstract / locative nominal (kA-...-an circumfix, distinct from kA-...-o)"
                                 resolved_category    = "nominal"
                             results.append({
                                 "prefix":         prefix_str,
@@ -1231,8 +1374,9 @@ def generate(root, prefix=None, suffix=None, infix=None, enclitic=None):
 # 11. MAIN ANALYSIS FUNCTION
 # ═══════════════════════════════════════════════════════════════════════
 
-def analyze(word, dictionary):
-    """Full morphological analysis of a Rungus word.
+def _analyze_impl(word, dictionary):
+    """Full morphological analysis of a Rungus word (internal — use
+    analyze(), which additionally derives the grammatical voice).
 
     Returns a dict with keys:
       input          : str   — original input word
@@ -1364,7 +1508,7 @@ def analyze(word, dictionary):
     if redup_type:
         # Recursively analyze the base form to ensure it yields a valid match.
         # This prevents false-positive reduplication stripping from blocking the correct parse.
-        sub_r = analyze(redup_base, dictionary)
+        sub_r = _analyze_impl(redup_base, dictionary)
         if sub_r["matched"]:
             result["reduplication"] = redup_type
             result["root"] = sub_r["root"]
@@ -1411,6 +1555,7 @@ def analyze(word, dictionary):
     # Try infix on the working form first (for bare-root infixed words
     # like rumikot, rinumikot that have no prefix, and also for verbs
     # where the infix is inserted inside the prefix, e.g. nongokodop -> n-ong-okodop).
+    prefix_results = None   # computed lazily; shared between Step 4 and Step 6
     infix_str, infix_cat, infix_meaning, after_infix = strip_infix(working)
     if infix_str:
         # Try direct lookup first
@@ -1421,9 +1566,19 @@ def analyze(word, dictionary):
             result["breakdown"].append(f"infix: -{infix_str}- = {infix_meaning}")
             _set_match(after_infix, 0.85, [f"root: '{after_infix}' = \"{entry['gloss']}\""])
             return result
-        
-        # Fallback: recursively analyze the remainder if not found directly
-        sub_r = analyze(after_infix, dictionary)
+
+        # Guard: if the whole word parses cleanly with a prefix that itself
+        # contains this infix string (past-marked prefixes like pinong-,
+        # minong-, kino-), prefer that parse (Step 6) over recursing on the
+        # infix remainder — recursion multiplies false-positive chains
+        # (e.g. pinongimot → -in- → pongimot → pi+ong+imot instead of
+        # the correct pinong + imot).
+        prefix_results = try_strip_prefixes(working, dictionary)
+        if any(infix_str in (r.get("prefix") or "") for r in prefix_results):
+            sub_r = {"matched": False}
+        else:
+            # Fallback: recursively analyze the remainder if not found directly
+            sub_r = _analyze_impl(after_infix, dictionary)
         if sub_r["matched"]:
             # Guard: only accept if the root is genuinely a real dictionary entry,
             # standalone word, proper name, or loanword.  This prevents false
@@ -1481,7 +1636,8 @@ def analyze(word, dictionary):
         return result
 
     # ── Step 6: Strip prefixes (with substitution + de-contraction) ───
-    prefix_results = try_strip_prefixes(working, dictionary)
+    if prefix_results is None:
+        prefix_results = try_strip_prefixes(working, dictionary)
     if prefix_results:
         # Get parent of working word if it is a subentry, to prioritize
         # matching against its true parent root.
@@ -1498,11 +1654,15 @@ def analyze(word, dictionary):
         def _rank(r):
             is_parent   = 0 if parent_word and r.get("root", "").strip().lower() == parent_word else 1
             has_p2      = 1 if r.get("prefix2") else 0
+            # Penalize very short roots (≤3 chars) — they are usually
+            # accidental collisions (e.g. koporuo → kopo+roo instead of
+            # the correct ko+paru+o with vowel-harmony reversal).
+            short_root  = 1 if len(r.get("root", "")) <= 3 else 0
             prefix_len  = -len(r.get("prefix", ""))  # negative = longer prefixes first
             has_infix   = 1 if r.get("infix") else 0
             has_suffix  = 1 if r.get("suffix") else 0
             root_len    = -len(r.get("root", ""))    # negative = longer roots first
-            return (is_parent, has_p2, prefix_len, has_infix, has_suffix, root_len)
+            return (is_parent, has_p2, short_root, prefix_len, has_infix, has_suffix, root_len)
         prefix_results.sort(key=_rank)
 
         best = prefix_results[0]
@@ -1568,6 +1728,15 @@ def analyze(word, dictionary):
                    ["morphological parse failed; resolved via sub-entry parent lookup"])
         return result
 
+    # ── Step 8.5: Direct lookup fallback after enclitic strip ────────
+    # When an enclitic was stripped, Steps 1.5/3 skipped direct lookup to
+    # prefer a morphological decomposition.  If none was found, accept the
+    # remainder as a plain dictionary word (e.g. lobongku → lobong + -ku).
+    if enc_str and working in dictionary:
+        _set_match(working, 0.9,
+                   [f"root: '{working}' = \"{dictionary[working]['gloss']}\""])
+        return result
+
     # ── Step 9: Standalone words / VIRTUAL_ROOTS fallback ────────────
     if working in STANDALONE_WORDS:
         gloss, pos = STANDALONE_WORDS[working]
@@ -1579,6 +1748,33 @@ def analyze(word, dictionary):
         return result
 
     # Nothing found
+    return result
+
+
+def analyze(word, dictionary):
+    """Full morphological analysis of a Rungus word, including derivation
+    of the grammatical voice (agent / undergoer / beneficiary / conveyance
+    — Kroeger's four-voice Philippine-type analysis, per Christine
+    Dreiheller's guidance).  See _analyze_impl for the full result schema;
+    this wrapper adds:
+
+      voice          : str  — 'agent' | 'undergoer' | 'beneficiary' |
+                              'conveyance' | None
+      voice_meaning  : str  — human-readable description (or None)
+    """
+    result = _analyze_impl(word, dictionary)
+    voice, voice_meaning = (None, None)
+    if result.get("matched") and not (result.get("proper_name") or result.get("loanword")):
+        voice, voice_meaning = derive_voice(
+            prefix=result.get("prefix"),
+            infix=result.get("infix"),
+            suffix=result.get("suffix"),
+            prefix2=result.get("prefix2"),
+        )
+    result["voice"] = voice
+    result["voice_meaning"] = voice_meaning
+    if voice:
+        result["breakdown"].append(f"voice: {voice_meaning}")
     return result
 
 
